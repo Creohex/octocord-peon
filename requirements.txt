@@ -1,0 +1,6 @@
+discord<=1.0
+asyncio
+pymysql
+requests
+pillow
+numpy
