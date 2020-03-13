@@ -6,7 +6,7 @@ RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
 EXPOSE 80 443
 
-COPY ./app /app
+COPY ./app/entrypoint.py /app
+COPY ./app/peon /usr/local/lib/python3.6/site-packages/peon
 
-CMD ["python", "app.py"]
-
+CMD ["python", "entrypoint.py"]
