@@ -91,7 +91,7 @@ class Peon():
         "!tr <blabla>\t - translate",
         "!starify <blabla>\t - write mystical stuff on night sky",
     ]
-    rolling_alexeys = [d(b'3a616c6568614562616c6f3a'), d(b'3a6562616c6f416c6568613a')]
+    rolling_alexeys = [d(b'616c6568614562616c6f'), d(b'6562616c6f416c656861')]
 
     @classmethod
     def de_latinize(cls, text):
@@ -342,10 +342,12 @@ class Peon():
                     return
 
                 if "l" in raw[0].lower():
-                    raw = raw[0].lower()
+                    real_alexeys = ["<:{0.name}:{0.id}>".format(e)
+                                    for e in message.channel.server.emojis
+                                    if e.name in self.rolling_alexeys]
                     text = " ".join(
-                        [self.rolling_alexeys[_ % 2]
-                         for _ in range(min(int(re.split('l', raw)[1]), 40))])
+                        [real_alexeys[_ % 2]
+                         for _ in range(min(int(re.split('l', raw[0].lower())[1]), 40))])
                     await reply(text)
                     await client.delete_message(message)
                     return
