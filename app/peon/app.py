@@ -4,6 +4,7 @@ import os
 import random
 import re
 import requests
+import time
 import urllib.parse
 
 import discord
@@ -63,12 +64,16 @@ class Peon():
         d(b'd181d0bbd0b0d0b2d0b0d183d0bad180d0b0d0b8d0bdd0b5'):
             [100, [d(b'd093d0b5d180d0bed18fd0bc20d181d0bbd0b0d0b2d0b021')]],
         'дрон': [5, [d(b'd0b020d0b4d180d0bed0bd20d185d0bed180d0bed188d0b8d0b9')]],
-        'тарас': [20, [d(b'd0b020d0b2d0bed18220d0b820d0bdd0b520d0bfd0b8d0b4d0bed180d0b0d181'),
-                                d(b'd0b2d181d0b52dd182d0b0d0bad0b820d0bfd0b8d0b4d0b0d180d0b0d181')]],
-        'сандра': [default_chance, [d(b'd187d0b5d188d0b5d18220d092d0b5d189d0bad0b5d0bfd0b5d0bad0b0')]],
+        'тарас': [20, [
+            d(b'd0b020d0b2d0bed18220d0b820d0bdd0b520d0bfd0b8d0b4d0bed180d0b0d181'),
+            d(b'd0b2d181d0b52dd182d0b0d0bad0b820d0bfd0b8d0b4d0b0d180d0b0d181')]
+        ],
+        'сандра': [default_chance,
+                   [d(b'd187d0b5d188d0b5d18220d092d0b5d189d0bad0b5d0bfd0b5d0bad0b0')]],
         'сандрес': [default_chance, ['европейский конгресс']],
         'алексей': [33, [d(b'd0b5d0b1d0b5d18220d0b3d183d181d0b5d0b9')]],
-        'алеша': [default_chance, [d(b'd0b220d188d182d0b0d0bdd0b0d18520d0b4d180d0b0d0bad0bed188d0b0')]],
+        'алеша': [default_chance,
+                  [d(b'd0b220d188d182d0b0d0bdd0b0d18520d0b4d180d0b0d0bad0bed188d0b0')]],
         'коля': [default_chance, [d(b'd0b5d0b1d0b5d182d181d18f20d0b220d0bfd0bed0bbd0b5')]],
         'жекич': [default_chance, [d(b'd0bbd0bed0b2d0b8d18220d180d0b6d0b5d0bad0b8d187')]],
     }
@@ -86,12 +91,15 @@ class Peon():
     ]
     peon_commands = [
         "!stats\t - show bot stats",
-        "!roll <d12|2d8 + d20|...>\t - roll dice",
+        "!roll 2d8 + d12\t - roll dice",
         "!roll L5\t - roll aleha",
-        "!tr <blabla>\t - translate",
-        "!starify <blabla>\t - write mystical stuff on night sky",
+        "!tr blabla\t - translate",
+        "!starify blabla\t - write mystical stuff on night sky",
+        "!slot\t - test your luck"
     ]
     rolling_alexeys = [d(b'616c6568614562616c6f'), d(b'6562616c6f416c656861')]
+    slot_blacklist = [
+        "clap", "hmm", "pepek", "loading", "lookrocknroll", "alehaSpin", "dansU"]
 
     @classmethod
     def de_latinize(cls, text):
@@ -229,6 +237,31 @@ class Peon():
 
         return text
 
+    @classmethod
+    def slot_sequence(cls, emojis, slots=3, seq_len=8):
+        """Produce a sequence of slot states in string format.
+
+        :param str emojis:
+        """
+
+        if len(emojis) < slots:
+            raise Exception(
+                "Not enough emojis.\n({0})".format(cls.format_emojis(emojis)))
+        emojis = cls.format_emojis(e for e in emojis if e.name not in cls.slot_blacklist)
+        sample = [emojis.pop(emojis.index(random.choice(emojis))) for _ in range(slots)]
+        sequence = [" ".join(random.choice(sample)
+                             for slot in range(slots))
+                    for seq in range(seq_len)]
+        success = sequence[-1].count(sequence[-1].split()[0]) == 3
+
+        return sequence, success
+
+    @staticmethod
+    def format_emojis(emojis):
+        """Format emojis so they render properly once sent."""
+
+        return ["<:{0.name}:{0.id}>".format(e) for e in emojis]
+
     def __init__(self):
         self.env_vars = Utils.get_env_vars()
 
@@ -289,13 +322,7 @@ class Peon():
 
             # !test
             if message.content.startswith('!test'):
-                counter = 0
-                tmp = await reply('Calculating messages...')
-                async for log in client.logs_from(message.channel, limit=100):
-                    if log.author == message.author:
-                        counter += 1
-                return await client.edit_message(
-                    tmp, 'You have {0} messages.'.format(counter))
+                pass
 
             # !tr
             if message.content.startswith('!tr'):
@@ -342,12 +369,12 @@ class Peon():
                     return
 
                 if "l" in raw[0].lower():
-                    real_alexeys = ["<:{0.name}:{0.id}>".format(e)
-                                    for e in message.channel.server.emojis
-                                    if e.name in self.rolling_alexeys]
+                    real_alexeys = self.format_emojis(filter(
+                        lambda e: e.name in self.rolling_alexeys,
+                        message.channel.server.emojis))
                     text = " ".join(
                         [real_alexeys[_ % 2]
-                         for _ in range(min(int(re.split('l', raw[0].lower())[1]), 40))])
+                         for _ in range(min(int(re.split('l', raw[0].lower())[1]), 200))])
                     await reply(text)
                     await client.delete_message(message)
                     return
@@ -361,6 +388,18 @@ class Peon():
                     await reply(self.starify(text))
                     await client.delete_message(message)
                 return
+
+            # !slot
+            if message.content == "!slot":
+                sequence, success = self.slot_sequence(message.channel.server.emojis)
+
+                msg = await reply("@{0}!".format(message.author)) # todo author.id?...
+                time.sleep(1)
+                for s in sequence:
+                    await client.edit_message(msg, s)
+                    time.sleep(1)
+
+                await client.add_reaction(msg, emoji="🎊" if success else "😫")
 
             # simple replies
             await handle_simple_replies()
