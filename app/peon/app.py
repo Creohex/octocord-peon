@@ -95,7 +95,8 @@ class Peon():
         "!roll L5\t - roll aleha",
         "!tr blabla\t - translate",
         "!starify blabla\t - write mystical stuff on night sky",
-        "!slot\t - test your luck"
+        "!slot\t - test your luck",
+        "!wiki\t - find out about stuff",
     ]
     rolling_alexeys = [d(b'616c6568614562616c6f'), d(b'6562616c6f416c656861')]
     slot_blacklist = [
@@ -262,6 +263,20 @@ class Peon():
 
         return ["<:{0.name}:{0.id}>".format(e) for e in emojis]
 
+    @classmethod
+    def wiki_summary(cls, query):
+        """Extract first available wiki summary on provided query.
+
+        :param str query: wiki query
+        """
+
+        req = json.loads(requests.get(
+            "https://en.wikipedia.org/api/rest_v1/page/summary/{0}".format(
+                urllib.parse.quote(query))).text)
+
+        return "{0}:\n{1}\n({2})".format(
+            req["title"], req["extract"], req["content_urls"]["desktop"]["page"])
+
     def __init__(self):
         self.env_vars = Utils.get_env_vars()
 
@@ -400,6 +415,12 @@ class Peon():
                     time.sleep(1)
 
                 await client.add_reaction(msg, emoji="🎊" if success else "😫")
+
+            # !wiki
+            if message.content.startswith("!wiki "):
+                query = message.content[6:]
+                if len(query) > 0:
+                    return await reply(self.wiki_summary(query))
 
             # simple replies
             await handle_simple_replies()
