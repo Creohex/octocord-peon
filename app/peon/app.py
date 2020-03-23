@@ -107,6 +107,24 @@ class Peon():
     rolling_alexeys = [d(b'616c6568614562616c6f'), d(b'6562616c6f416c656861')]
     slot_blacklist = [
         "clap", "hmm", "pepek", "loading", "lookrocknroll", "alehaSpin", "dansU"]
+    slot_grats = [
+            d(b'7b307d2c20d0b020d182d18b20d0bdd0b5d0bfd0bbd0bed185'),
+            d(b'd09dd18320d0b2d181d1912c20d182d0b5d0bfd0b5d180d18c20d0b2d181d0b520d182'
+             b'd191d0bbd0bad0b820d182d0b2d0bed0b8'),
+            d(b'd09bd183d187d188d0b520d0b1d18b20d182d18b20d182d0b0d0ba20d0b7d0b020d0be'
+             b'd0b1d0b6d0b5d0bad182d0b8d0b220d0b1d0b8d0bbd181d18f'),
+            d(b'd09ad180d0b0d181d0b8d0b2d0be20d0bad180d183d182d0b8d188d18c2c207b307d21'),
+            d(b'7b307d202d20d0bfd0bed0b1d0b5d0b4d0b8d182d0b5d0bbd18c20d0bfd0be20d0b6d0'
+             b'b8d0b7d0bdd0b8'),
+            d(b'28d18f20d0bdd0b8d187d0b5d0b3d0be20d0bdd0b520d0bfd0bed0b4d0bad180d183d1'
+             b'87d0b8d0b2d0b0d0bb2c203130302520d0b8d0bdd184d0b029'),
+            d(b'd0a1d0b5d0bad182d0bed18020d0bfd180d0b8d0b720d0bdd0b020d0b1d0b0d180d0b0'
+             b'd0b1d0b0d0bdd0b521'),
+        ]
+    generic_grats = [
+        "Congratulations!", "wow, unbelievable", "Once in a lifetime achievement!",
+        "Incredible!", "Absolutely gorgeous outcome!", "Well done!"
+    ]
 
     @classmethod
     def de_latinize(cls, text):
