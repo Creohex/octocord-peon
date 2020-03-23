@@ -367,7 +367,7 @@ class Peon():
 
             # !test
             if message.content.startswith('!test'):
-                pass
+                return
 
             # !tr
             if message.content.startswith('!tr'):
@@ -422,9 +422,10 @@ class Peon():
                          for _ in range(min(int(re.split('l', raw[0].lower())[1]), 200))])
                     await reply(text)
                     await client.delete_message(message)
-                    return
                 else:
-                    return await reply(self.roll(raw))
+                    await reply(self.roll(raw))
+
+                return
 
             # !starify
             if message.content.startswith("!starify "):
