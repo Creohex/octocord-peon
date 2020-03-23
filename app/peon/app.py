@@ -287,6 +287,12 @@ class Peon():
 
         return ["<:{0.name}:{0.id}>".format(e) for e in emojis]
 
+    @staticmethod
+    def format_user(user):
+        """Proper user format for chat."""
+
+        return "<@{0}>".format(user.id)
+
     @classmethod
     def wiki_summary(cls, query):
         """Extract first available wiki summary on provided query.
@@ -432,7 +438,7 @@ class Peon():
             if message.content == "!slot":
                 sequence, success = self.slot_sequence(message.channel.server.emojis)
 
-                msg = await reply("@{0}!".format(message.author)) # todo author.id?...
+                msg = await reply(message.author)
                 time.sleep(1)
                 for s in sequence:
                     await client.edit_message(msg, s)
