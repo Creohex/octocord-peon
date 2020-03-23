@@ -24,7 +24,7 @@ class Utils():
             'token',
             'db_host',
             'db_username',
-            'db_password'
+            'db_password',
         ]
         missing_variables = [_ for _ in required_variables if _ not in os.environ.keys()]
         if len(missing_variables) > 0:
@@ -42,6 +42,12 @@ class Utils():
 class Peon():
 
     # NOTE: temporary entities (awaiting db implementation)
+    langs = ["af", "ga", "sq", "it", "ar", "ja", "az", "kn", "eu", "ko", "bn", "la",
+             "be", "lv", "bg", "lt", "ca", "mk", "ms", "mt", "hr", "no", "cs", "fa",
+             "da", "pl", "nl", "pt", "en", "ro", "eo", "ru", "et", "sr", "tl", "sk",
+             "fi", "sl", "fr", "es", "gl", "sw", "ka", "sv", "de", "ta", "el", "te",
+             "gu", "th", "ht", "tr", "iw", "uk", "hi", "ur", "hu", "vi", "is", "cy",
+             "id", "yi"]
     tr_endpoints = {
             "clients5": {
                 "url_template": "https://clients5.google.com/translate_a/t?"
