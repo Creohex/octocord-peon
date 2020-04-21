@@ -22,6 +22,7 @@ class Utils():
 
         required_variables = [
             'token',
+            'rapidapi_token',
             'db_host',
             'db_username',
             'db_password',
@@ -36,6 +37,7 @@ class Utils():
             "db_user": os.environ['db_username'],
             "db_pass": os.environ['db_password'],
             "token": os.environ['token'],
+            "rapidapi_token": os.environ['rapidapi_token'],
         }
 
 
@@ -103,6 +105,7 @@ class Peon():
         "!starify blabla\t - write mystical stuff on night sky",
         "!slot\t - test your luck",
         "!wiki\t - find out about stuff",
+        "!urban\t - lookup outdated meme terms on urban dictionary",
     ]
     rolling_alexeys = [d(b'616c6568614562616c6f'), d(b'6562616c6f416c656861')]
     slot_blacklist = [
@@ -307,6 +310,34 @@ class Peon():
         return "{0}:\n{1}\n({2})".format(
             req["title"], req["extract"], req["content_urls"]["desktop"]["page"])
 
+    @classmethod
+    def urban_query(cls, token, query):
+        """Extract overall urban dictionary definitions
+
+        :param str query: term, phrase
+
+        :return: query definition
+        """
+
+        headers = {
+            "x-rapidapi-host": "mashape-community-urban-dictionary.p.rapidapi.com",
+            "x-rapidapi-key": token,
+        }
+        params = {"term": urllib.parse.quote(query)}
+        request = requests.get(
+            "https://mashape-community-urban-dictionary.p.rapidapi.com/define",
+            headers=headers,
+            params=params,
+        )
+        res = json.loads(request.text)
+        if len(res["list"]):
+            descr = res["list"][0]
+            mask = r'\[|\]'
+            return (descr["word"], re.sub(mask, '', descr["definition"]),
+                    re.sub(mask, '', descr["example"]), descr["permalink"])
+        else:
+            return None
+
     def __init__(self):
         self.env_vars = Utils.get_env_vars()
 
@@ -465,6 +496,20 @@ class Peon():
                 query = message.content[6:]
                 if len(query) > 0:
                     return await reply(self.wiki_summary(query))
+
+            # !urban
+            if message.content.startswith("!urban "):
+                query = message.content[7:]
+
+                if len(query) > 0:
+                    defs = self.urban_query(self.env_vars["rapidapi_token"], query)
+                    if defs is None:
+                        return await client.add_reaction(message, emoji="😫")
+                    else:
+                        word, description, examples, _ = defs
+                        text = "{0}:\n{1}\n\nexamples:\n{2}".format(
+                            word, description, examples)
+                        return await reply(text)
 
             # simple replies
             await handle_simple_replies()
