@@ -358,11 +358,11 @@ class Peon():
             if message.author == client.user:
                 return
 
-            msg_triggered = False
+            async def reply(text):
+                if text:
+                    if isinstance(text, str) and len(text) > 2000:
+                        text = "{0}...".format(text[:1996])
 
-            async def reply(text, single_reply=False):
-                if not single_reply or (single_reply and not msg_triggered):
-                    msg_triggered = True
                     return await client.send_message(message.channel, text)
 
             async def handle_simple_replies():
