@@ -160,7 +160,8 @@ class Peon():
 
     @classmethod
     def normalize_text(
-        cls, text, simple_mask=True, de_latinize=True, special_chars=True
+        cls, text,
+        simple_mask=False, de_latinize=False, special_chars=False, markdown=False
     ):
         """Text normalization.
 
@@ -178,6 +179,8 @@ class Peon():
             text = cls.de_latinize(text)
         if special_chars:
             text = cls.transform_special_characters(text)
+        if markdown:
+            text = re.sub(r"\*|_|~|", "", text)
         return text
 
     @classmethod
@@ -378,7 +381,8 @@ class Peon():
                     return await client.send_message(message.channel, text)
 
             async def handle_simple_replies():
-                payload = self.normalize_text(message.content, special_chars=False)
+                payload = self.normalize_text(
+                    message.content, simple_mask=True, de_latinize=True)
                 for k, v in self.simple_replies_collection.items():
                     if k in payload:
                         chance, phrases = v
@@ -451,7 +455,7 @@ class Peon():
 
             # !roll
             if message.content.startswith("!roll "):
-                text = message.content.lower()
+                text = self.normalize_text(message.content.lower(), markdown=True)
                 raw = re.split(r' ?\+ ?', re.split(r'!roll ', text)[1])
 
                 try:
