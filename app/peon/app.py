@@ -236,31 +236,43 @@ class Peon():
     def roll(cls, raw):
         """Roll dice.
 
-        :param str raw: raw input string
+        :param str raw: list of raw roll inputs
 
         :return: roll results
         """
 
+        dice_limit = 10 ** 30
+
         def get_rolls(s):
-            raw = re.split(r'd', s)
-            n = 1 if raw[0] == '' else int(raw[0])
-            size = int(raw[1])
-            if size == 0:
-                raise Exception("wrong arg")
-            return (n, size, [random.randint(1, size) for _ in range(n)])
+            if "-" in s:
+                left, right = (int(value) for value in re.split(r'-', s))
+                if left > dice_limit or right > dice_limit:
+                    raise Exception("range value(s) are too high")
+                return ("{0}-{1}:".format(left, right), [random.randint(left, right)])
+            else:
+                roll_params = re.split(r'd', s if "d" in s else "d{0}".format(s))
+                throws = 1 if roll_params[0] == '' else int(roll_params[0])
+                sides = int(roll_params[1])
+                if sides == 0:
+                    raise Exception("wrong arg")
+                if throws > 100 or sides > dice_limit:
+                    raise Exception("dice size/throw count is too high")
+                return (
+                    "{0}d{1}:".format(throws, sides),
+                    [random.randint(1, sides) for _ in range(throws)]
+                )
 
         rolls = [get_rolls(_) for _ in raw]
         text = None
 
-        if len(rolls) == 1 and rolls[0][0] == 1:
-            text = "rolls: {0}".format(rolls[0][2][0])
+        if len(rolls) == 1 and len(rolls[0][1]) == 1:
+            text = "rolls: {0}".format(rolls[0][1][0])
         else:
             text = "rolls:\n"
             total = 0
-            for r in rolls:
-                text += "{0}d{1}: {2}\n".format(
-                    r[0], r[1], ', '.join([str(_) for _ in r[2]]))
-                total += sum(r[2])
+            for label, value in rolls:
+                text += "{0} {1}\n".format(label, ', '.join([str(_) for _ in value]))
+                total += sum(value)
             text += "---\ntotal: {0}".format(total)
 
         return text
@@ -439,24 +451,30 @@ class Peon():
 
             # !roll
             if message.content.startswith("!roll "):
-                text = message.content
+                text = message.content.lower()
                 raw = re.split(r' ?\+ ?', re.split(r'!roll ', text)[1])
-                if not len(raw):
+
+                try:
+                    if not len(raw):
+                        raise Exception("Args required (cmd: {0})".format(text))
+
+                    if "l" in raw[0]:
+                        real_alexeys = self.format_emojis(filter(
+                            lambda e: e.name in self.rolling_alexeys,
+                            message.channel.server.emojis))
+                        text = " ".join(
+                            [real_alexeys[_ % 2] for _
+                             in range(min(int(re.split('l', raw[0].lower())[1]), 200))]
+                        )
+                        await reply(text)
+                        await client.delete_message(message)
+                    else:
+                        await reply(self.roll(raw))
+
                     return
-
-                if "l" in raw[0].lower():
-                    real_alexeys = self.format_emojis(filter(
-                        lambda e: e.name in self.rolling_alexeys,
-                        message.channel.server.emojis))
-                    text = " ".join(
-                        [real_alexeys[_ % 2]
-                         for _ in range(min(int(re.split('l', raw[0].lower())[1]), 200))])
-                    await reply(text)
-                    await client.delete_message(message)
-                else:
-                    await reply(self.roll(raw))
-
-                return
+                except Exception as e:
+                    await client.add_reaction(message, emoji="😫")
+                    raise e
 
             # !starify
             if message.content.startswith("!starify "):
