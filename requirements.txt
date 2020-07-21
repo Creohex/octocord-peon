@@ -1,6 +1,6 @@
 discord<=1.0
 asyncio
-pymysql
+pymongo==3.6
 requests
 pillow
 numpy
