@@ -501,17 +501,15 @@ class Peon():
                 await client.add_reaction(msg, emoji="🎊" if success else "😫")
 
                 if success:
-                    msg = random.choice(self.slot_grats).format(
-                        self.format_user(message.author))
-                    if random.choice(range(10)) == 0:
-                        congrats = self.translate(
-                            random.choice(self.generic_grats),
-                            lang_from="en", lang_to=random.choice(self.langs)
-                        )["text"]
-                        msg += "\n{0}".format(congrats)
-                    await reply(msg)
-
-                return
+                    return await reply(
+                        random.choice(self.slot_grats).format(
+                            self.format_user(message.author))
+                        if random.choice([0,1])
+                        else self.translate(
+                                random.choice(self.generic_grats),
+                                lang_from="en", lang_to=random.choice(self.langs)
+                             )["text"]
+                        )
 
             # !wiki
             if message.content.startswith("!wiki "):
