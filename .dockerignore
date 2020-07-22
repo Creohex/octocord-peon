@@ -1,0 +1,6 @@
+.git*
+.pytest_cache
+.tox
+.vscode
+Makefile
+db/data
