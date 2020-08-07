@@ -202,7 +202,7 @@ class Command():
     async def execute(self, message):
         """Execute function."""
 
-        if message.content.startswith(self.prefix_full):
+        if message.content.lower().startswith(self.prefix_full):
             try:
                 await self.func(message, message.content[self.content_offset:])
                 return True
