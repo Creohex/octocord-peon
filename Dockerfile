@@ -1,4 +1,4 @@
-FROM python:3.6-slim
+FROM python:3.7.4-slim
 
 WORKDIR /app
 COPY ./requirements.txt /app
@@ -6,7 +6,7 @@ RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
 EXPOSE 80 443
 
-COPY ./app/entrypoint.py /app
-COPY ./app/peon /usr/local/lib/python3.6/site-packages/peon
+COPY ./app/init /app/init
+COPY ./app/peon /usr/local/lib/python3.7/site-packages/peon
 
-CMD ["python", "entrypoint.py"]
+CMD ["/bin/bash", "./init/entrypoint.sh"]
