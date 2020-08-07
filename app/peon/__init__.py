@@ -1,3 +1,3 @@
-from .app import Utils, Peon
+from .app import utils, Peon
 
-__all__ = [Peon.__name__, Utils.__name__]
+__all__ = [Peon.__name__, utils.__name__]
