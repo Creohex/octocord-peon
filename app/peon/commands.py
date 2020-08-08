@@ -5,6 +5,8 @@ import random
 import re
 import time
 
+from abc import abstractmethod
+
 from peon import utils
 
 
@@ -23,11 +25,15 @@ async def handle_simple_replies(message):
 
     payload = utils.normalize_text(
         message.content, simple_mask=True, do_de_latinize=True)
+
     for k, v in utils.simple_replies_collection.items():
         if k in payload:
             chance, phrases = v
             if len(phrases) > 0 and chance >= random.randint(0, 100):
                 await reply(message, random.choice(phrases))
+                return True
+
+    return False
 
 
 async def handle_emergency_party_mention(message):
@@ -44,6 +50,9 @@ async def handle_emergency_party_mention(message):
             await reply(message,
                         "{0} {1}".format(random.choice(members).mention,
                                          random.choice(utils.emergency_phrases)))
+            return True
+
+    return False
 
 
 async def cmd_peon(message, content):
@@ -188,6 +197,16 @@ async def cmd_urban(message, content):
             await reply(message, text)
 
 
+async def cmd_stats(message, content):
+    """Prints various bot stats and parameters."""
+
+    stats = {
+        "x": "y"
+    }
+
+    await reply(message, "\n".join("{0}: {1}".format(k, v) for k, v in stats.items()))
+
+
 async def cmd_scramble(message, content):
     """Scramble text by consequently translating through multiple languages."""
 
@@ -203,7 +222,20 @@ async def cmd_scramble(message, content):
     await reply(message, text)
 
 
-class Command():
+class BaseCommand():
+    """Abstract command class."""
+
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    async def execute(self, message, **kwargs):
+        """Execute command based on the message provided."""
+
+        raise NotImplementedError()
+
+
+class Command(BaseCommand):
     """Peon command object."""
 
     CMD_SIGN = "!"
@@ -229,6 +261,8 @@ class Command():
         second positional argument.
         """
 
+        super(Command, self).__init__()
+
         if not isinstance(prefix, str):
             raise Exception("prefix '{0}' is not a string!".format(prefix))
         if not callable(func) or func.__code__.co_argcount != 2:
@@ -238,12 +272,12 @@ class Command():
         self.prefix = prefix
         self.func = func
 
-    async def execute(self, message):
+    async def execute(self, message, **kwargs):
         """Execute function."""
 
         if message.content.lower().startswith(self.prefix_full):
             try:
-                await self.func(message, message.content[self.content_offset:])
+                await self.func(message, message.content[self.content_offset:], **kwargs)
                 return True
             except Exception as e:
                 await message.add_reaction(emoji="😫")
@@ -252,21 +286,47 @@ class Command():
         return False
 
 
-commands = [
-    Command("peon", cmd_peon),
-    Command("test", cmd_test),
-    Command("tr", cmd_tr),
-    Command("roll", cmd_roll),
-    Command("starify", cmd_starify),
-    Command("slot", cmd_slot),
-    Command("wiki", cmd_wiki),
-    Command("urban", cmd_urban),
-]
-"""Command dictionary."""
+class MentionHandler(BaseCommand):
+    """Represents chat mention handler object."""
+
+    def __init__(self, handler):
+        """Initialize `MentionHandler` object.
+
+        Expecting single function argument, which must expect
+        `discord.Message` object as single positional argument.
+        """
+
+        super(MentionHandler, self).__init__()
+
+        if not callable(handler) or handler.__code__.co_argcount != 1:
+            raise Exception(
+                "'handler' must be a function with strictly one positional arg!")
+
+        self.func = handler
+
+    async def execute(self, message):
+        """Execute handler."""
+
+        return await self.func(message)
 
 
-mention_handlers = [
-    handle_simple_replies,
-    handle_emergency_party_mention,
-]
-"""Message content related reactions."""
+class CommandSet():
+    """Represents bot command set."""
+
+    def __init__(self):
+        self.commands = []
+
+    def register(self, commands):
+        """Register commands."""
+
+        if not all(isinstance(command, BaseCommand) for command in commands):
+            raise Exception("'command' object must inherit from `BaseCommand`.")
+
+        self.commands.extend(commands)
+
+    async def execute(self, message):
+        """Executes commands in order and terminates after first successful command."""
+
+        for command in self.commands:
+            if await command.execute(message):
+                return
