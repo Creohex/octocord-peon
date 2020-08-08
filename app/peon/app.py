@@ -24,7 +24,12 @@ from peon.utils import (
 class Peon():
     """Peon."""
 
+    @property
+    def client(self):
+        return self._client
+
     def __init__(self):
+        self._client = None
         self.env_vars = utils.get_env_vars()
         self.command_set = commands.CommandSet(self)
         self.command_set.register([
@@ -47,6 +52,7 @@ class Peon():
             Command("urban", commands.cmd_urban,
                     description="query urban dictionary",
                     examples=["{0} lollygagging"]),
+            Command("stats", commands.cmd_stats, description="print various peon stats"),
             MentionHandler(commands.handle_simple_replies),
             MentionHandler(commands.handle_emergency_party_mention),
         ])
@@ -60,12 +66,12 @@ class Peon():
             "heartbeat_timeout": 30,
         }
 
-        self.client = discord.Client(**client_params)
+        self._client = discord.Client(**client_params)
 
         @self.client.event
         async def on_ready():
             print("Logged in as\n{0}\n{1}\n------".format(
-                self.client.user.name, self.client.user.id))
+                self._client.user.name, self.client.user.id))
 
         @self.client.event
         async def on_message(message):
@@ -74,4 +80,4 @@ class Peon():
 
             await self.command_set.execute(message)
 
-        self.client.run(self.env_vars[ENV_TOKEN])
+        self._client.run(self.env_vars[ENV_TOKEN])
