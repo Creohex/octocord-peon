@@ -20,7 +20,7 @@ async def reply(message, text):
         return await message.channel.send(text)
 
 
-async def handle_simple_replies(message):
+async def handle_simple_replies(message, **kwargs):
     """Scan messages for keywords and reply accordingly."""
 
     payload = utils.normalize_text(
@@ -36,7 +36,7 @@ async def handle_simple_replies(message):
     return False
 
 
-async def handle_emergency_party_mention(message):
+async def handle_emergency_party_mention(message, **kwargs):
     """Reply to random emergency member if role is mentioned."""
 
     if utils.role_emergency in message.content:
@@ -55,20 +55,33 @@ async def handle_emergency_party_mention(message):
     return False
 
 
-async def cmd_peon(message, content):
+async def cmd_peon(message, content, **kwargs):
     """List available commands."""
 
-    await reply(
-        message, "Available commands:\n{0}".format("\n".join(utils.peon_commands)))
+    commands = [cmd for cmd in kwargs.get("command_set").commands
+                if isinstance(cmd, Command)]
+    descriptions = []
+
+    for command in commands:
+        info = command.prefix_full
+        if command.description:
+            info = "{0} - {1}".format(info, command.description)
+        if command.examples:
+            info = "{0}\n\t{1}".format(info, "\n\t".join(
+                [example.format(command.prefix_full) for example in command.examples]))
+
+        descriptions.append(info)
+
+    await reply(message, "Available commands:\n{0}".format("\n".join(descriptions)))
 
 
-async def cmd_test(message, content):
+async def cmd_test(message, content, **kwargs):
     """Test function."""
 
     await reply(message, "test - {0}".format(content))
 
 
-async def cmd_tr(message, content):
+async def cmd_tr(message, content, **kwargs):
     """Translate text using available translation services.
 
     Formats:
@@ -98,7 +111,7 @@ async def cmd_tr(message, content):
     await reply(message, "({0}) {1}".format(result["lang"], result["text"]))
 
 
-async def cmd_roll(message, content):
+async def cmd_roll(message, content, **kwargs):
     """Dice rolls.
 
     Dice combinations can be passed in various forms, for example:
@@ -136,7 +149,7 @@ async def cmd_roll(message, content):
         raise e
 
 
-async def cmd_starify(message, content):
+async def cmd_starify(message, content, **kwargs):
     """Generate string resemblint star sky with ASCII symbols and spread text evenly."""
 
     if len(content) > 0:
@@ -144,7 +157,7 @@ async def cmd_starify(message, content):
         await message.delete()
 
 
-async def cmd_slot(message, content):
+async def cmd_slot(message, content, **kwargs):
     """Slot machine simulation."""
 
     static_emojis = [e for e in message.channel.guild.emojis if not e.animated]
@@ -171,7 +184,7 @@ async def cmd_slot(message, content):
         )
 
 
-async def cmd_wiki(message, content):
+async def cmd_wiki(message, content, **kwargs):
     """Query wikipedia and return results.
 
     Since this wiki API does not support a search function, spaces in
@@ -184,7 +197,7 @@ async def cmd_wiki(message, content):
         await reply(message, utils.wiki_summary(content))
 
 
-async def cmd_urban(message, content):
+async def cmd_urban(message, content, **kwargs):
     """Query urban dictionary."""
 
     if len(content) > 0:
@@ -197,17 +210,7 @@ async def cmd_urban(message, content):
             await reply(message, text)
 
 
-async def cmd_stats(message, content):
-    """Prints various bot stats and parameters."""
-
-    stats = {
-        "x": "y"
-    }
-
-    await reply(message, "\n".join("{0}: {1}".format(k, v) for k, v in stats.items()))
-
-
-async def cmd_scramble(message, content):
+async def cmd_scramble(message, content, **kwargs):
     """Scramble text by consequently translating through multiple languages."""
 
     text = utils.translate(content, lang_to="en")["text"]
@@ -225,8 +228,9 @@ async def cmd_scramble(message, content):
 class BaseCommand():
     """Abstract command class."""
 
-    def __init__(self):
-        pass
+    def __init__(self, description=None, examples=None):
+        self.description = description
+        self.examples = examples or []
 
     @abstractmethod
     async def execute(self, message, **kwargs):
@@ -253,7 +257,7 @@ class Command(BaseCommand):
 
         return len(self.prefix_full) + 1
 
-    def __init__(self, prefix, func):
+    def __init__(self, prefix, func, **kwargs):
         """Initialize `Command` object.
 
         Function must have `message` object as first positional argument
@@ -261,7 +265,7 @@ class Command(BaseCommand):
         second positional argument.
         """
 
-        super(Command, self).__init__()
+        super(Command, self).__init__(**kwargs)
 
         if not isinstance(prefix, str):
             raise Exception("prefix '{0}' is not a string!".format(prefix))
@@ -289,14 +293,14 @@ class Command(BaseCommand):
 class MentionHandler(BaseCommand):
     """Represents chat mention handler object."""
 
-    def __init__(self, handler):
+    def __init__(self, handler, **kwargs):
         """Initialize `MentionHandler` object.
 
         Expecting single function argument, which must expect
         `discord.Message` object as single positional argument.
         """
 
-        super(MentionHandler, self).__init__()
+        super(MentionHandler, self).__init__(**kwargs)
 
         if not callable(handler) or handler.__code__.co_argcount != 1:
             raise Exception(
@@ -304,16 +308,17 @@ class MentionHandler(BaseCommand):
 
         self.func = handler
 
-    async def execute(self, message):
+    async def execute(self, message, **kwargs):
         """Execute handler."""
 
-        return await self.func(message)
+        return await self.func(message, **kwargs)
 
 
 class CommandSet():
     """Represents bot command set."""
 
-    def __init__(self):
+    def __init__(self, client):
+        self.client = client
         self.commands = []
 
     def register(self, commands):
@@ -328,5 +333,5 @@ class CommandSet():
         """Executes commands in order and terminates after first successful command."""
 
         for command in self.commands:
-            if await command.execute(message):
+            if await command.execute(message, client=self.client, command_set=self):
                 return
