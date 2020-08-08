@@ -210,6 +210,26 @@ async def cmd_urban(message, content, **kwargs):
             await reply(message, text)
 
 
+async def cmd_stats(message, content, **kwargs):
+    """Prints peon stats."""
+
+    data = {}
+    client = kwargs.get("client").client
+    commands = kwargs.get("command_set").commands
+
+    data["user"] = client.user.name
+    data["latency"] = client.latency
+    data["guild count"] = len(client.guilds)
+    data["guilds"] = ", ".join("{0} ({1})".format(guild.name, guild.owner.name)
+                               for guild in client.guilds)
+    data["commands"] = len(commands)
+    data["cached messages"] = len(client.cached_messages)
+    data["private channels"] = len(client.private_channels)
+    data["voice clients"] = len(client.voice_clients)
+
+    await reply(message, "\n".join("{0}: {1}".format(k, v) for k, v in data.items()))
+
+
 async def cmd_scramble(message, content, **kwargs):
     """Scramble text by consequently translating through multiple languages."""
 
@@ -317,8 +337,8 @@ class MentionHandler(BaseCommand):
 class CommandSet():
     """Represents bot command set."""
 
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, discord_client):
+        self.discord_client = discord_client
         self.commands = []
 
     def register(self, commands):
@@ -333,5 +353,6 @@ class CommandSet():
         """Executes commands in order and terminates after first successful command."""
 
         for command in self.commands:
-            if await command.execute(message, client=self.client, command_set=self):
+            if await command.execute(message, client=self.discord_client,
+                                              command_set=self):
                 return
