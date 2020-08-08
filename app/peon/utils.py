@@ -98,16 +98,6 @@ emergency_phrases = [
     'заходи. или ты коля?',
     'slish, sel na motor i plusanul! :pig: :dark_sunglasses: ',
 ]
-peon_commands = [
-    "!stats\t - show bot stats",
-    "!roll 2d8 + d12\t - roll dice",
-    "!roll L5\t - roll aleha",
-    "!tr blabla\t - translate",
-    "!starify blabla\t - write mystical stuff on night sky",
-    "!slot\t - test your luck",
-    "!wiki\t - find out about stuff",
-    "!urban\t - lookup outdated meme terms on urban dictionary",
-]
 rolling_alexeys = [d(b'616c6568614562616c6f'), d(b'6562616c6f416c656861')]
 slot_grats = [
     d(b'7b307d2c20d0b020d182d18b20d0bdd0b5d0bfd0bbd0bed185'),

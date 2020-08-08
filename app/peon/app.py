@@ -26,17 +26,27 @@ class Peon():
 
     def __init__(self):
         self.env_vars = utils.get_env_vars()
-        self.command_set = commands.CommandSet()
+        self.command_set = commands.CommandSet(self)
         self.command_set.register([
-            Command("peon", commands.cmd_peon),
+            Command("peon", commands.cmd_peon, description="show bot stats"),
             Command("test", commands.cmd_test),
-            Command("tr", commands.cmd_tr),
-            Command("roll", commands.cmd_roll),
-            Command("starify", commands.cmd_starify),
-            Command("slot", commands.cmd_slot),
-            Command("wiki", commands.cmd_wiki),
-            Command("urban", commands.cmd_urban),
-            Command("stats", commands.cmd_stats),
+            Command("tr", commands.cmd_tr,
+                    description="translate text (langs - en, et, ru, be, ...)",
+                    examples=["{0} bla", "{0}<to_lang> bla",
+                              "{0}<from_lang><to_lang> bla"]),
+            Command("roll", commands.cmd_roll,
+                    description="roll dice",
+                    examples=["{0} d4", "{0} 2d8", "{0} 100",
+                              "{0} 42-59", "{0} L8", "{0} 2d5+100+4d4"]),
+            Command("starify", commands.cmd_starify,
+                    description="write mystical stuff on night sky",
+                    examples=["{0} each minute a minute passes"]),
+            Command("slot", commands.cmd_slot, description="test your luck"),
+            Command("wiki", commands.cmd_wiki,
+                    description="query wiki", examples=["{0} nuclear fission"]),
+            Command("urban", commands.cmd_urban,
+                    description="query urban dictionary",
+                    examples=["{0} lollygagging"]),
             MentionHandler(commands.handle_simple_replies),
             MentionHandler(commands.handle_emergency_party_mention),
         ])
