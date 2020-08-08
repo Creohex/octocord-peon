@@ -1,10 +1,11 @@
+"""Various utils, DB operations, etc."""
+
 import binascii
 import json
 import os
 import random
 import re
 import requests
-import time
 import urllib.parse
 
 from pymongo import MongoClient
@@ -63,43 +64,44 @@ class Mongo():
 
 # ------ NOTE: temporary entities (awaiting db implementation)
 langs = ["af", "ga", "sq", "it", "ar", "ja", "az", "kn", "eu", "ko", "bn", "la",
-            "be", "lv", "bg", "lt", "ca", "mk", "ms", "mt", "hr", "no", "cs", "fa",
-            "da", "pl", "nl", "pt", "en", "ro", "eo", "ru", "et", "sr", "tl", "sk",
-            "fi", "sl", "fr", "es", "gl", "sw", "ka", "sv", "de", "ta", "el", "te",
-            "gu", "th", "ht", "tr", "iw", "uk", "hi", "ur", "hu", "vi", "is", "cy",
-            "id", "yi"]
+         "be", "lv", "bg", "lt", "ca", "mk", "ms", "mt", "hr", "no", "cs", "fa",
+         "da", "pl", "nl", "pt", "en", "ro", "eo", "ru", "et", "sr", "tl", "sk",
+         "fi", "sl", "fr", "es", "gl", "sw", "ka", "sv", "de", "ta", "el", "te",
+         "gu", "th", "ht", "tr", "iw", "uk", "hi", "ur", "hu", "vi", "is", "cy",
+         "id", "yi"]
 tr_endpoints = {
-        "clients5": {
-            "url_template": "https://clients5.google.com/translate_a/t?"
-                "client=dict-chrome-ex&sl={0}&tl={1}&dt=t&q={2}",
-            "get_lang": lambda _: _["ld_result"]["srclangs"][0],
-            "get_text": lambda _: _["sentences"]["trans"],
-        },
-        "translate": {
-            "url_template": "https://translate.googleapis.com/translate_a/"
-                "single?client=gtx&sl={0}&tl={1}&dt=t&q={2}",
-            "get_lang": lambda _: _[2],
-            "get_text": lambda _: "".join(b[0] for b in _[0]),
-        },
-    }
+    "clients5": {
+        "url_template": "https://clients5.google.com/translate_a/t?"
+            "client=dict-chrome-ex&sl={0}&tl={1}&dt=t&q={2}",
+        "get_lang": lambda _: _["ld_result"]["srclangs"][0],
+        "get_text": lambda _: _["sentences"]["trans"],
+    },
+    "translate": {
+        "url_template": "https://translate.googleapis.com/translate_a/"
+            "single?client=gtx&sl={0}&tl={1}&dt=t&q={2}",
+        "get_lang": lambda _: _[2],
+        "get_text": lambda _: "".join(b[0] for b in _[0]),
+    },
+}
 d = lambda _: binascii.a2b_hex(_).decode('utf8')
 default_chance = 15
 simple_replies_collection = {
     'саня': [50, [d(b'd185d183d0b920d181d0bed181d0b8'), 'ты в порядке?']],
     'леха': [33, [d(b'd0b3d0bed0b2d0bdd0b020d0bbd0b5d0bfd0b5d185d0b0')]],
-    d(b'd181d0bbd0b0d0b2d0b0d183d0bad180d0b0d0b8d0bdd0b5'):
-        [100, [d(b'd093d0b5d180d0bed18fd0bc20d181d0bbd0b0d0b2d0b021')]],
+    d(b'd181d0bbd0b0d0b2d0b0d183d0bad180d0b0d0b8d0bdd0b5'): [
+        100, [d(b'd093d0b5d180d0bed18fd0bc20d181d0bbd0b0d0b2d0b021')]
+    ],
     'дрон': [5, [d(b'd0b020d0b4d180d0bed0bd20d185d0bed180d0bed188d0b8d0b9')]],
     'тарас': [20, [
         d(b'd0b020d0b2d0bed18220d0b820d0bdd0b520d0bfd0b8d0b4d0bed180d0b0d181'),
         d(b'd0b2d181d0b52dd182d0b0d0bad0b820d0bfd0b8d0b4d0b0d180d0b0d181')]
     ],
     'сандра': [default_chance,
-                [d(b'd187d0b5d188d0b5d18220d092d0b5d189d0bad0b5d0bfd0b5d0bad0b0')]],
+               [d(b'd187d0b5d188d0b5d18220d092d0b5d189d0bad0b5d0bfd0b5d0bad0b0')]],
     'сандрес': [default_chance, ['европейский конгресс']],
     'алексей': [33, [d(b'd0b5d0b1d0b5d18220d0b3d183d181d0b5d0b9')]],
     'алеша': [default_chance,
-                [d(b'd0b220d188d182d0b0d0bdd0b0d18520d0b4d180d0b0d0bad0bed188d0b0')]],
+              [d(b'd0b220d188d182d0b0d0bdd0b0d18520d0b4d180d0b0d0bad0bed188d0b0')]],
     'коля': [default_chance, [d(b'd0b5d0b1d0b5d182d181d18f20d0b220d0bfd0bed0bbd0b5')]],
     'жекич': [default_chance, [d(b'd0bbd0bed0b2d0b8d18220d180d0b6d0b5d0bad0b8d187')]],
 }
@@ -126,26 +128,25 @@ peon_commands = [
     "!urban\t - lookup outdated meme terms on urban dictionary",
 ]
 rolling_alexeys = [d(b'616c6568614562616c6f'), d(b'6562616c6f416c656861')]
-slot_blacklist = [
-    "clap", "hmm", "pepek", "loading", "lookrocknroll", "alehaSpin", "dansU"]
 slot_grats = [
-        d(b'7b307d2c20d0b020d182d18b20d0bdd0b5d0bfd0bbd0bed185'),
-        d(b'd09dd18320d0b2d181d1912c20d182d0b5d0bfd0b5d180d18c20d0b2d181d0b520d182'
-            b'd191d0bbd0bad0b820d182d0b2d0bed0b8'),
-        d(b'd09bd183d187d188d0b520d0b1d18b20d182d18b20d182d0b0d0ba20d0b7d0b020d0be'
-            b'd0b1d0b6d0b5d0bad182d0b8d0b220d0b1d0b8d0bbd181d18f'),
-        d(b'd09ad180d0b0d181d0b8d0b2d0be20d0bad180d183d182d0b8d188d18c2c207b307d21'),
-        d(b'7b307d202d20d0bfd0bed0b1d0b5d0b4d0b8d182d0b5d0bbd18c20d0bfd0be20d0b6d0'
-            b'b8d0b7d0bdd0b8'),
-        d(b'28d18f20d0bdd0b8d187d0b5d0b3d0be20d0bdd0b520d0bfd0bed0b4d0bad180d183d1'
-            b'87d0b8d0b2d0b0d0bb2c203130302520d0b8d0bdd184d0b029'),
-        d(b'd0a1d0b5d0bad182d0bed18020d0bfd180d0b8d0b720d0bdd0b020d0b1d0b0d180d0b0'
-            b'd0b1d0b0d0bdd0b521'),
-    ]
+    d(b'7b307d2c20d0b020d182d18b20d0bdd0b5d0bfd0bbd0bed185'),
+    d(b'd09dd18320d0b2d181d1912c20d182d0b5d0bfd0b5d180d18c20d0b2d181d0b520d182'
+        b'd191d0bbd0bad0b820d182d0b2d0bed0b8'),
+    d(b'd09bd183d187d188d0b520d0b1d18b20d182d18b20d182d0b0d0ba20d0b7d0b020d0be'
+        b'd0b1d0b6d0b5d0bad182d0b8d0b220d0b1d0b8d0bbd181d18f'),
+    d(b'd09ad180d0b0d181d0b8d0b2d0be20d0bad180d183d182d0b8d188d18c2c207b307d21'),
+    d(b'7b307d202d20d0bfd0bed0b1d0b5d0b4d0b8d182d0b5d0bbd18c20d0bfd0be20d0b6d0'
+        b'b8d0b7d0bdd0b8'),
+    d(b'28d18f20d0bdd0b8d187d0b5d0b3d0be20d0bdd0b520d0bfd0bed0b4d0bad180d183d1'
+        b'87d0b8d0b2d0b0d0bb2c203130302520d0b8d0bdd184d0b029'),
+    d(b'd0a1d0b5d0bad182d0bed18020d0bfd180d0b8d0b720d0bdd0b020d0b1d0b0d180d0b0'
+        b'd0b1d0b0d0bdd0b521'),
+]
 generic_grats = [
     "Congratulations!", "wow, unbelievable", "Once in a lifetime achievement!",
     "Incredible!", "Absolutely gorgeous outcome!", "Well done!"
 ]
+ascii_ascending_luminance = ".,-~:;=!*#$@"
 # ------
 
 def de_latinize(text):
@@ -177,8 +178,8 @@ def transform_special_characters(text):
     return text
 
 
-def normalize_text(text, simple_mask=False, do_de_latinize=False,
-                         special_chars=False, markdown=False
+def normalize_text(
+    text, simple_mask=False, do_de_latinize=False, special_chars=False, markdown=False
 ):
     """Text normalization.
 
@@ -242,6 +243,7 @@ def starify(sentence, limit=600):
     payload = list(zip(points, payload))
     sky = ""
     last_char = None
+
     for _ in range(limit):
         if len(sky) in points:
             sky += next(word for point, word in payload if point == len(sky))
@@ -250,6 +252,7 @@ def starify(sentence, limit=600):
         else:
             last_char = random.choice(alphabet.replace(last_char, ''))
         sky += last_char
+
     return sky
 
 
@@ -277,10 +280,9 @@ def roll(raw):
                 raise Exception("wrong arg")
             if throws > 100 or sides > dice_limit:
                 raise Exception("dice size/throw count is too high")
-            return (
-                "{0}d{1}:".format(throws, sides),
-                [random.randint(1, sides) for _ in range(throws)]
-            )
+
+            return ("{0}d{1}:".format(throws, sides),
+                    [random.randint(1, sides) for _ in range(throws)])
 
     rolls = [get_rolls(_) for _ in raw]
     text = None
@@ -306,21 +308,21 @@ def slot_sequence(emojis, slots=3, seq_len=8):
 
     if len(emojis) < slots:
         raise Exception(
-            "Not enough emojis.\n({0})".format(format_emojis(emojis)))
-    emojis = format_emojis(e for e in emojis if e.name not in slot_blacklist)
+            "Not enough static emojis ({0}).".format(len(emojis)))
+
+    emojis = [format_emoji(e) for e in emojis]
     sample = [emojis.pop(emojis.index(random.choice(emojis))) for _ in range(slots)]
-    sequence = [" ".join(random.choice(sample)
-                            for slot in range(slots))
+    sequence = [" ".join(random.choice(sample) for slot in range(slots))
                 for seq in range(seq_len)]
-    success = sequence[-1].count(sequence[-1].split()[0]) == 3
+    success = sequence[-1].count(sequence[-1].split()[0]) == slots
 
     return sequence, success
 
 
-def format_emojis(emojis):
+def format_emoji(emoji):
     """Format emojis so they render properly once sent."""
 
-    return ["<:{0.name}:{0.id}>".format(e) for e in emojis]
+    return "<:{0.name}:{0.id}>".format(emoji)
 
 
 def format_user(user):

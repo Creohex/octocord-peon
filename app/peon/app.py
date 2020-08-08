@@ -31,17 +31,16 @@ class Peon():
 
         client_params = {
             "max_messages": 3000,
+            "activity": discord.Game("work work"),
+            "heartbeat_timeout": 30,
         }
 
         self.client = discord.Client(**client_params)
-        # await self.register_events()
 
         @self.client.event
         async def on_ready():
-            print('Logged in as')
-            print(self.client.user.name)
-            print(self.client.user.id)
-            print('------')
+            print("Logged in as\n{0}\n{1}\n------".format(
+                self.client.user.name, self.client.user.id))
 
         @self.client.event
         async def on_message(message):
