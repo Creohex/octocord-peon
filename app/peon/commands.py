@@ -188,6 +188,21 @@ async def cmd_urban(message, content):
             await reply(message, text)
 
 
+async def cmd_scramble(message, content):
+    """Scramble text by consequently translating through multiple languages."""
+
+    text = utils.translate(content, lang_to="en")["text"]
+    lang_from = "en"
+    lang_sequence = [random.choice(utils.langs) for _ in range(6)] + ["ru"]
+
+    for l in lang_sequence:
+        translated = utils.translate(text, lang_from=lang_from, lang_to=l)
+        lang_from = l
+        text = translated["text"]
+
+    await reply(message, text)
+
+
 class Command():
     """Peon command object."""
 
