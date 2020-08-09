@@ -6,6 +6,7 @@ import re
 import time
 
 from abc import abstractmethod
+from datetime import datetime
 
 from peon import utils
 
@@ -214,11 +215,15 @@ async def cmd_stats(message, content, **kwargs):
     """Prints peon stats."""
 
     data = {}
-    client = kwargs.get("client").client
+    peon = kwargs.get("client")
+    client = peon.client
     commands = kwargs.get("command_set").commands
 
     data["user"] = client.user.name
     data["latency"] = client.latency
+    delta = datetime.now() - peon.start_time
+    data["uptime"] = "{0} days, {1} hours, {2} minutes, {3} seconds".format(
+        delta.days, delta.seconds // 3600, delta.seconds // 60, delta.seconds % 60)
     data["guild count"] = len(client.guilds)
     data["guilds"] = ", ".join("{0} ({1})".format(guild.name, guild.owner.name)
                                for guild in client.guilds)

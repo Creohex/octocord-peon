@@ -1,5 +1,7 @@
 import re
 
+from datetime import datetime
+
 import discord
 
 from peon import commands, CommandSet, Command, MentionHandler
@@ -47,6 +49,7 @@ class Peon():
             MentionHandler(commands.handle_simple_replies),
             MentionHandler(commands.handle_emergency_party_mention),
         ])
+        self.start_time = datetime.now()
 
     def run(self):
         """Run peon."""
