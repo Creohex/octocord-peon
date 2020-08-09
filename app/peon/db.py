@@ -114,3 +114,82 @@ class Database(object):
     def __repr__(self):
         return "Database({0}, reconnect={1}, timeout={2})".format(
             self.__database.name, self.__reconnect, self.__timeout)
+
+
+class MongoObject(MutableMapping):
+    """Represents document in MongoDB collection.
+
+    Extends 'MutableMapping' abstract class for inherit dict-like behavior.
+    Provides accessing sub-document fields in dot-notation like queries in MongoDB.
+    """
+
+    __object__ = None
+    """Object dictionary."""
+
+    def __init__(self, data=None):
+        self.__object__ = data or {}
+        for key in self.__object__:
+            if isinstance(self.__object__[key], dict):
+                self.__object__[key] = MongoObject(self.__object__[key])
+
+    def __getitem__(self, key):
+        if "." in key:
+            key, rest = key.split(".", 1)
+            return MongoObject(self.__object__[key]).__getitem__(rest)
+        elif (
+            key in self.__object__ and
+            isinstance(self.__object__[key], dict)
+        ):
+            return MongoObject(self.__object__[key])
+        else:
+            return self.__object__[key]
+
+    def __setitem__(self, key, value):
+        if "." in key:
+            key, rest = key.split(".", 1)
+            self.__object__.setdefault(key, MongoObject()).__setitem__(rest, value)
+        elif isinstance(value, dict):
+            self.__object__[key] = MongoObject(value)
+        else:
+            self.__object__[key] = value
+
+    def __delitem__(self, key):
+        if "." in key:
+            key, rest = key.split(".", 1)
+            return MongoObject(self.__object__[key]).__delitem__(rest)
+        else:
+            del self.__object__[key]
+
+    def __contains__(self, key):
+        if "." in key:
+            key, rest = key.split(".", 1)
+            return MongoObject(self.__object__[key]).__contains__(rest)
+        else:
+            return key in self.__object__
+
+    def __iter__(self):
+        return iter(self.__object__)
+
+    def __len__(self):
+        return len(self.__object__)
+
+    def __str__(self):
+        return str(self.__object__)
+
+    def __repr__(self):
+        return "MongoObject(%s)" % (self.__object__,)
+
+    def __del__(self):
+        del self.__object__
+
+    def to_dict(self):
+        """Returns dict from MongoObject."""
+
+        result = {}
+        for key in self.__object__:
+            if isinstance(self.__object__[key], MongoObject):
+                result[key] = self[key].to_dict()
+            else:
+                result[key] = self.__object__[key]
+
+        return result
