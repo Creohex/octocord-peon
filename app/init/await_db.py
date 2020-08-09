@@ -5,16 +5,21 @@ import traceback
 from peon.db import check_connection
 
 
-retry_limit = 10
-retry_counter = 1
-print("Waiting for db to come online... (%s retries)" % retry_limit)
+def await_db():
+    retry_limit = 10
+    retry_counter = 1
+    print("Waiting for db to come online... (%s retries)" % retry_limit)
 
-while True:
+    while True:
 
-    if check_connection():
-        print("Database is available.")
-        break
-    else:
-        print("(%s) Couldn't connect to db, retrying..." % retry_counter, flush=True)
+        if check_connection():
+            print("Database is available.")
+            break
+        else:
+            print("(%s) Couldn't connect to db, retrying..." % retry_counter, flush=True)
 
-        time.sleep(1)
+            time.sleep(1)
+
+
+if __name__ == "__main__":
+    await_db()
