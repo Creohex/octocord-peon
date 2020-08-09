@@ -1,21 +1,10 @@
-import binascii
-import json
-import os
-import random
 import re
-import requests
-import time
-import urllib.parse
-import traceback
 
 import discord
-import pymysql
 
-import peon.utils as utils
-
-from peon import commands
-from peon.commands import CommandSet, Command, MentionHandler
+from peon import commands, CommandSet, Command, MentionHandler
 from peon.utils import (
+    get_env_vars,
     ENV_TOKEN,
     ENV_RAPIDAPI_TOKEN,
 )
@@ -26,12 +15,14 @@ class Peon():
 
     @property
     def client(self):
+        """Discord client property representing Peon."""
+
         return self._client
 
     def __init__(self):
         self._client = None
-        self.env_vars = utils.get_env_vars()
-        self.command_set = commands.CommandSet(self)
+        self.env_vars = get_env_vars()
+        self.command_set = CommandSet(self)
         self.command_set.register([
             Command("peon", commands.cmd_peon, description="show bot stats"),
             Command("test", commands.cmd_test),
