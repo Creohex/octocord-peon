@@ -5,7 +5,7 @@ import traceback
 from peon.utils import Mongo
 
 
-retry_limit = 3
+retry_limit = 15
 retry_counter = 1
 print("Waiting for db to come online... (%s retries)" % retry_limit)
 
@@ -27,4 +27,4 @@ while True:
             print("Exceded retry limit. Failed to connect to db.", flush=True)
             exit(1)
 
-        time.sleep(1)
+        time.sleep(2)
