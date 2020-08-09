@@ -8,24 +8,20 @@ import re
 import requests
 import urllib.parse
 
-from pymongo import MongoClient
-
 
 ENV_TOKEN = "token"
 ENV_RAPIDAPI_TOKEN = "rapidapi_token"
-ENV_DB_HOST = "db_host"
-ENV_DB_DB = "db_db"
-ENV_DB_USER = "db_user"
-ENV_DB_PASS = "db_pass"
-ENV_DB_PORT = "db_port"
+ENV_DB_HOST = "MONGO_HOST"
+ENV_DB_PORT = "MONGO_PORT"
+ENV_DB_USER = "MONGO_INITDB_ROOT_USERNAME"
+ENV_DB_PASS = "MONGO_INITDB_ROOT_PASSWORD"
 ENV_VARS = [
     ENV_TOKEN,
     ENV_RAPIDAPI_TOKEN,
     ENV_DB_HOST,
-    ENV_DB_DB,
+    ENV_DB_PORT,
     ENV_DB_USER,
     ENV_DB_PASS,
-    ENV_DB_PORT,
 ]
 """Required environment variables."""
 
@@ -41,25 +37,6 @@ def get_env_vars():
         raise Exception("Error: missing required variables: %s" % missing_variables)
 
     return {key: os.environ[key] for key in ENV_VARS}
-
-
-class Mongo():
-    """Mongo operations."""
-
-    @property
-    def client(self):
-        return self.client
-
-    @property
-    def env_vars(self):
-        if not self._env_vars:
-            self._env_vars = get_env_vars()
-
-        return self._env_vars
-
-    def __init__(self):
-        self._env_vars = None
-        self.client = MongoClient(self.env_vars[ENV_DB_HOST], self.env_vars[ENV_DB_PORT])
 
 
 # ------ NOTE: temporary entities (awaiting db implementation)
