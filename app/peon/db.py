@@ -20,6 +20,19 @@ from peon.utils import (
 )
 
 
+def check_connection(db_name="conn_check"):
+    """Verify that db is accessible."""
+
+    try:
+        db = Database(db_name)
+        db["{0}_test_coll".format(db_name)].insert({"bla": "bla"})
+        db.drop()
+    except:
+        return False
+
+    return True
+
+
 class _Collection(object):
     """Wrapper over pymongo's collection object."""
 
