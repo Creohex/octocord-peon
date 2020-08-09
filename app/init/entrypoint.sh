@@ -12,7 +12,7 @@ if [ "$?" != 0 ]; then
 fi
 
 echo "Awaiting db startup..."
-#python $ROOT/init/await_db.py
+python $ROOT/init/await_db.py
 
 if [ $? == "1" ]; then
     echo "Error! DB not available."
