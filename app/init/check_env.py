@@ -8,9 +8,8 @@ from peon.utils import get_env_vars
 def verify_env():
     """Verify existing environment variables."""
 
-    print("Attempting to get environment variables...")
+    print("Verifying environment variables...")
     get_env_vars()
-    print("Success!")
 
 
 if __name__ == "__main__":
