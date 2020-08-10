@@ -10,6 +10,8 @@ services:
         env_file:
             - .env
             - .db.env
+        volumes:
+            - ./tools:/tools
 
     mongodb-server:
         image: mongo:4.2.0
