@@ -571,3 +571,126 @@ class Document(MongoObject):
                     del self[field]
             else:
                 self[field] = db_document[field]
+
+
+class Message(Document):
+    """Represents discord chat message.
+
+    {
+        "id": basestring
+        "type": basestring
+        "timestamp": basestring
+        "timestampEdited": basestring ?
+        "isPinned": bool
+        "content": basestring
+        "channel": basestring ?
+        "author": {
+            "id": basestring
+            "name": basestring
+            "discriminator": basestring
+            "isBot": bool
+            "avatarUrl": basestring
+        },
+        "attachments": [
+            {
+                "id": basestring
+                "url": basestring
+                "fileName": basestring
+                "fileSizeBytes": int
+            },
+        ],
+        "embeds":
+        [
+            {
+                u'description': basestring
+                u'author': {
+                    u'url': basestring
+                    u'iconUrl': basestring
+                    u'name': basestring
+                },
+                u'url': basestring
+                u'timestamp': basestring
+                u'title': basestring
+                u'fields': [
+                    ?
+                ]
+            }
+        ],
+        "reactions":
+        [
+            {
+                "count": int
+                "emoji": {
+                    "isAnimated": bool
+                    "imageUrl": basestring
+                    "id": basestring
+                    "name": basestring
+                }
+            }
+        ]
+    }
+    """
+
+    __database__ = "peondb"
+    __collection__ = "messages"
+    """Database connection properties."""
+
+    @classmethod
+    def create_index(cls):
+        """Creates required indexes."""
+
+        cls.collection().create_index([
+            ("id", pymongo.ASCENDING),
+            ("timestamp", pymongo.ASCENDING),
+        ], unique=False)
+
+    def __init__(self, *args, **kwargs):
+        super(Message, self).__init__(*args, **kwargs)
+
+    @classmethod
+    def from_discord_message(message):
+        """Create `Message` object from discord.message.Message."""
+
+        # TODO: ...
+        raise NotImplementedError()
+
+    @classmethod
+    def one(cls, msg_id=None, required=True, fields=None, add_query=None):
+        """Returns one message."""
+
+        query = add_query or {}
+
+        return super(Message, cls).one(
+            key=msg_id, fields=fields, add_query=query, required=required)
+
+    @classmethod
+    def all(cls, msg_ids=None, fields=None, add_query=None, **kwargs):
+        """Returns all Messages according to provided arguments.
+
+        :return: Message generator
+        """
+
+        query = {}
+
+        if msg_ids:
+            query["id"] = {"$in": msg_ids}
+
+        query = add_query or {}
+
+        return super(Message, cls).all(
+            keys=msg_ids, fields=fields, add_query=query, **kwargs)
+
+    @classmethod
+    def count(cls, add_query=None):
+        """Count Messages."""
+
+        query = add_query or {}
+
+        return super(Message, cls).count(query=query)
+
+    @classmethod
+    def create(cls):
+        """Creates Message."""
+
+        # TODO: ...
+        raise NotImplementedError()
