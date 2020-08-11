@@ -8,6 +8,7 @@ import re
 import requests
 import urllib.parse
 
+from pymongo import MongoClient
 
 ENV_TOKEN = "token"
 ENV_RAPIDAPI_TOKEN = "rapidapi_token"
@@ -37,6 +38,16 @@ def get_env_vars():
         raise Exception("Error: missing required variables: %s" % missing_variables)
 
     return {key: os.environ[key] for key in ENV_VARS}
+
+
+def get_db(db_name, host=None, user=None, password=None):
+    """Get pymongo database obj."""
+
+    return MongoClient("mongodb://{0}:{1}@{2}".format(
+        user or os.environ.get(ENV_DB_USER),
+        password or os.environ.get(ENV_DB_PASS),
+        host or os.environ.get(ENV_DB_HOST)
+    ))[db_name]
 
 
 # ------ NOTE: temporary entities (awaiting db implementation)
