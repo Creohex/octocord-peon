@@ -223,7 +223,7 @@ async def cmd_stats(message, content, **kwargs):
     data["latency"] = client.latency
     delta = datetime.now() - peon.start_time
     data["uptime"] = "{0} days, {1} hours, {2} minutes, {3} seconds".format(
-        delta.days, delta.seconds // 3600, delta.seconds // 60, delta.seconds % 60)
+        delta.days, delta.seconds // 3600, delta.seconds % 3600 // 60, delta.seconds % 60)
     data["guild count"] = len(client.guilds)
     data["guilds"] = ", ".join("{0} ({1})".format(guild.name, guild.owner.name)
                                for guild in client.guilds)
