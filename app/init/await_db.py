@@ -16,8 +16,11 @@ def await_db():
             print("Database is available.")
             break
         else:
-            print("(%s) Couldn't connect to db, retrying..." % retry_counter, flush=True)
+            if retry_counter >= retry_limit:
+                raise Exception("DB not available!")
 
+            print("(%s) Couldn't connect to db, retrying..." % retry_counter, flush=True)
+            retry_counter += 1
             time.sleep(1)
 
 
