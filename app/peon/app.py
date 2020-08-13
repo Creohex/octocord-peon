@@ -7,6 +7,7 @@ import discord
 from peon import commands, CommandSet, Command, MentionHandler
 from peon.utils import (
     get_env_vars,
+    get_file,
     ENV_TOKEN,
     ENV_RAPIDAPI_TOKEN,
 )
@@ -14,6 +15,10 @@ from peon.utils import (
 
 class Peon():
     """Peon."""
+
+    NAME = "Peon"
+    GAME_NAME = "work work"
+    AVATAR = get_file("{0}.png".format(NAME))
 
     @property
     def client(self):
@@ -56,7 +61,7 @@ class Peon():
 
         client_params = {
             "max_messages": 3000,
-            "activity": discord.Game(name="work work"),
+            "activity": discord.Game(name=self.GAME_NAME),
             "heartbeat_timeout": 30,
         }
 
@@ -64,6 +69,7 @@ class Peon():
 
         @self.client.event
         async def on_ready():
+            await self._client.user.edit(username=self.NAME, avatar=self.AVATAR)
             print("Logged in as\n{0}\n{1}\n------".format(
                 self._client.user.name, self.client.user.id))
 
