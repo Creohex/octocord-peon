@@ -26,6 +26,9 @@ ENV_VARS = [
 """Required environment variables."""
 
 
+ASSETS_FOLDER = "/app/assets"
+
+
 def get_env_vars():
     """
     Check if required environment variables are
@@ -37,6 +40,12 @@ def get_env_vars():
         raise Exception("Error: missing required variables: %s" % missing_variables)
 
     return {key: os.environ[key] for key in ENV_VARS}
+
+
+def get_file(name, mode="rb"):
+    """Returns existing file as bytes."""
+
+    return open("{0}/{1}".format(ASSETS_FOLDER, name), mode).read()
 
 
 # ------ NOTE: temporary entities (awaiting db implementation)
