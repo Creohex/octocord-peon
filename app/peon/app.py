@@ -19,12 +19,21 @@ class Peon():
     NAME = "Peon"
     GAME_NAME = "work work"
     AVATAR = get_file("{0}.png".format(NAME))
+    __INSTANCE = None
 
     @property
     def client(self):
         """Discord client property representing Peon."""
 
         return self._client
+
+    def __new__(cls):
+        """Ensure singleton."""
+
+        if Peon.__INSTANCE is None:
+            Peon.__INSTANCE = super(Peon, cls).__new__(cls)
+
+        return Peon.__INSTANCE
 
     def __init__(self):
         self._client = None
