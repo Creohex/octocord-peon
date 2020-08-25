@@ -258,6 +258,14 @@ async def cmd_doc(message, content, **kwargs):
     await reply(message, nltk.chat.eliza.eliza_chatbot.respond(content))
 
 
+async def cmd_morse(message, content, **kwargs):
+    """Attempt to translate to or from morse code."""
+
+    await reply(message, utils.from_morse(content)
+                         if utils.is_morse(content)
+                         else utils.to_morse(content))
+
+
 class BaseCommand():
     """Abstract command class."""
 

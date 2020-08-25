@@ -40,7 +40,7 @@ class Peon():
         self.env_vars = get_env_vars()
         self.command_set = CommandSet(self)
         self.command_set.register([
-            Command("peon", commands.cmd_peon, description="show bot stats"),
+            Command("peon", commands.cmd_peon),
             Command("test", commands.cmd_test),
             Command("tr", commands.cmd_tr,
                     description="translate text (langs - en, et, ru, be, ...)",
@@ -62,6 +62,9 @@ class Peon():
             Command("doc", commands.cmd_doc,
                     description="your personal psychotherapist hotline",
                     examples=["{0} life is hard, man.."]),
+            Command("morse", commands.cmd_morse,
+                    description="attempt to translate to/from morse code",
+                    examples=["{0} sos"]),
             Command("stats", commands.cmd_stats, description="print various peon stats"),
             MentionHandler(commands.handle_simple_replies),
             MentionHandler(commands.handle_emergency_party_mention),
