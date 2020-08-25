@@ -5,3 +5,4 @@ requests==2.21.0
 numpy==1.16.2
 pymysql
 pytest
+nltk
