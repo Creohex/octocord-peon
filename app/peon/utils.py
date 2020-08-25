@@ -30,7 +30,6 @@ ENV_VARS = [
 
 ASSETS_FOLDER = "/app/assets"
 
-MORSE_ALPHABET = string.ascii_lowercase + " ,.?/-()" + "".join(str(_) for _ in range(10))
 MORSE_CODE = {
     "a":".-", "b":"-...", "c":"-.-.", "d":"-..", "e":".", "f":"..-.", "g":"--.",
     "h":"....", "i":"..", "j":".---", "k":"-.-", "l":".-..", "m":"--", "n":"-.",
@@ -41,7 +40,7 @@ MORSE_CODE = {
     ", ":"--..--", ".":".-.-.-", "?":"..--..", "/":"-..-.", "-":"-....-",
     "(":"-.--.", ")":"-.--.-", " ": " ",
 }
-"""Morse code alphabet, dictionary."""
+"""Morse code dictionary."""
 
 
 def get_env_vars():
@@ -394,10 +393,5 @@ def from_morse(text):
 
 def to_morse(text):
     """Convert text to morse code."""
-
-    for char in text:
-        if char not in MORSE_ALPHABET:
-            raise Exception(
-                "Cannot convert '{0}' to morse code (illegal chars).".format(text))
 
     return " ".join(MORSE_CODE[_] for _ in text)
