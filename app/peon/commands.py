@@ -8,6 +8,8 @@ import time
 from abc import abstractmethod
 from datetime import datetime
 
+import nltk.chat.eliza
+
 from peon import utils
 
 
@@ -248,6 +250,12 @@ async def cmd_scramble(message, content, **kwargs):
         text = translated["text"]
 
     await reply(message, text)
+
+
+async def cmd_doc(message, content, **kwargs):
+    """Eliza psychotherapist hotline."""
+
+    await reply(message, nltk.chat.eliza.eliza_chatbot.respond(content))
 
 
 class BaseCommand():
