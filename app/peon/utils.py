@@ -6,6 +6,8 @@ import os
 import random
 import re
 import requests
+import string
+import traceback
 import urllib.parse
 
 
@@ -27,6 +29,18 @@ ENV_VARS = [
 
 
 ASSETS_FOLDER = "/app/assets"
+
+MORSE_CODE = {
+    "a":".-", "b":"-...", "c":"-.-.", "d":"-..", "e":".", "f":"..-.", "g":"--.",
+    "h":"....", "i":"..", "j":".---", "k":"-.-", "l":".-..", "m":"--", "n":"-.",
+    "o":"---", "p":".--.", "q":"--.-", "r":".-.", "s":"...", "t":"-", "u":"..-",
+    "v":"...-", "w":".--", "x":"-..-", "y":"-.--", "z":"--..",
+    "1":".----", "2":"..---", "3":"...--", "4":"....-", "5":".....",
+    "6":"-....", "7":"--...", "8":"---..", "9":"----.", "0":"-----",
+    ", ":"--..--", ".":".-.-.-", "?":"..--..", "/":"-..-.", "-":"-....-",
+    "(":"-.--.", ")":"-.--.-", " ": " ",
+}
+"""Morse code dictionary."""
 
 
 def get_env_vars():
@@ -328,3 +342,37 @@ def urban_query(token, query):
                 re.sub(mask, '', descr["example"]), descr["permalink"])
     else:
         return None
+
+
+def is_morse(text):
+    """Evaluate if provided text is morse code."""
+
+    chars = {}
+
+    for char in text:
+        chars[char] = chars[char] + 1 if char in chars else 1
+        if char not in [".", "-", " "] or len(chars) > 3:
+            return False
+
+    return True
+
+
+def from_morse(text):
+    """Convert morse code to text."""
+
+    words = text.split("  ") if "  " in text else [text]
+    words_translated = []
+
+    for word in (w.strip() for w in words):
+        if word:
+            words_translated.append(
+                "".join(next(k for k, v in MORSE_CODE.items() if v == char)
+                        for char in word.split()))
+
+    return " ".join(words_translated)
+
+
+def to_morse(text):
+    """Convert text to morse code."""
+
+    return " ".join(MORSE_CODE[_] for _ in text)
