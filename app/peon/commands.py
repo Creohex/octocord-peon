@@ -266,6 +266,13 @@ async def cmd_morse(message, content, **kwargs):
                          else utils.to_morse(content))
 
 
+async def cmd_8ball(message, content, **kwargs):
+    """Fetch 8ball message."""
+
+    await reply(message, "{0} {1}".format(
+        utils.format_user(message.author), random.choice(utils.ICOSAHEDRON)))
+
+
 class BaseCommand():
     """Abstract command class."""
 
