@@ -65,6 +65,8 @@ class Peon():
             Command("morse", commands.cmd_morse,
                     description="attempt to translate to/from morse code",
                     examples=["{0} sos"]),
+            Command("8ball", commands.cmd_8ball,
+                    description="ask 8ball the wise one for guidance"),
             Command("stats", commands.cmd_stats, description="print various peon stats"),
             MentionHandler(commands.handle_simple_replies),
             MentionHandler(commands.handle_emergency_party_mention),
