@@ -9,7 +9,6 @@ from peon.utils import (
     get_env_vars,
     get_file,
     ENV_TOKEN,
-    ENV_RAPIDAPI_TOKEN,
 )
 
 
@@ -46,6 +45,9 @@ class Peon():
                     description="translate text (langs - en, et, ru, be, ...)",
                     examples=["{0} bla", "{0}<to_lang> bla",
                               "{0}<from_lang><to_lang> bla"]),
+            Command("mangle", commands.cmd_mangle,
+                    description="mangle phrase meaning",
+                    examples=["{0} Let's see how it turns out!"]),
             Command("roll", commands.cmd_roll,
                     description="roll dice",
                     examples=["{0} d4", "{0} 2d8", "{0} 100",

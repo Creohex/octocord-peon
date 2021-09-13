@@ -236,17 +236,23 @@ async def cmd_stats(message, content, **kwargs):
     await reply(message, "\n".join("{0}: {1}".format(k, v) for k, v in data.items()))
 
 
-async def cmd_scramble(message, content, **kwargs):
+async def cmd_mangle(message, content, **kwargs):
     """Scramble text by consequently translating through multiple languages."""
 
+    content_max_length = 500
+    if len(content) > content_max_length:
+        raise Exception("Content too long! (>{0}):\n{1}".format(
+            content_max_length, content))
+
     text = utils.translate(content, lang_to="en")["text"]
-    lang_from = "en"
-    lang_sequence = [random.choice(utils.langs) for _ in range(6)] + ["ru"]
+    lang_from = "auto"
+    lang_sequence = [random.choice(utils.langs) for _ in range(3)] + ["ru"]
 
     for l in lang_sequence:
         translated = utils.translate(text, lang_from=lang_from, lang_to=l)
         lang_from = l
         text = translated["text"]
+        time.sleep(0.15)
 
     await reply(message, text)
 
