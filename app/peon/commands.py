@@ -9,6 +9,7 @@ from abc import abstractmethod
 from datetime import datetime
 
 import nltk.chat.eliza
+import steamapi
 
 from peon import utils
 
@@ -277,6 +278,69 @@ async def cmd_8ball(message, content, **kwargs):
 
     await reply(message, "{0} {1}".format(
         utils.format_user(message.author), random.choice(utils.ICOSAHEDRON)))
+
+
+async def cmd_steam(message, content, **kwargs):
+    """Steam API command."""
+
+    if not re.match(r"^\w+\s\w+", content):
+        await reply(message, "expecting: '<user> <command> <_args>'")
+        return
+
+    user_name, cmd, *args = content.split()
+
+    user_ids = {
+        "creohex": {"userid": 76561198044030521},
+        "fringe": {"userid": 76561198060131971},
+        "gorelka": {"userurl": "PIZERok"},
+        "dronxd": {"userid": 76561198017345589},
+        "dakorher": {"userurl": "Dakorher"},
+        "ankarnamir": {"userid": 76561198011087208},
+        "dees": {"userid": 76561198011748348},
+        "sashoker": {"userurl": "Sashoker"},
+    }
+
+    cmds = {
+        "id": lambda user: user.id,
+        "name": lambda user: user.real_name,
+        "profile": lambda user: user.profile_url,
+        "fiend_count": lambda user: len(user.friends),
+        "friends": lambda user: ", ".join(friend.name for friend in user.friends),
+        "avatar": lambda user: user.avatar_medium,
+        "avatar_big": lambda user: user.avatar_full,
+        "last_online": lambda user: user.last_logoff,
+        "level": lambda user: user.level,
+        "currently_playing": lambda user: user.currently_playing,
+        "game_count": lambda user: len(user.games),
+        "owned_game_count": lambda user: len(user.owned_games),
+        "vac": lambda user: str(user.is_vac_banned),
+        "game_bans": lambda user: user.number_of_vac_bans,
+    }
+
+    user_id = user_ids.get(user_name, None)
+    steamapi.core.APIConnection(api_key=os.environ.get(utils.ENV_STEAMAPI_TOKEN),
+                                validate_key=True)
+
+    if user_id:
+        user = steamapi.user.SteamUser(**user_id)
+    else:
+        try:
+            try:
+                user_id = {"userid": int(user_name)}
+            except ValueError:
+                user_id = {"userurl": user_name}
+
+            user = steamapi.user.SteamUser(**user_id)
+        except steamapi.errors.UserNotFoundError:
+            await reply(message, f"user '{user_name}' not found.")
+            return
+
+    cmd_handler = cmds.get(cmd, None)
+    if cmd_handler is None:
+        await reply(message, f"supported commands: {', '.join(cmds.keys())}.")
+        return
+
+    await reply(message, cmd_handler(user))
 
 
 class BaseCommand():
