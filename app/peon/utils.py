@@ -6,13 +6,12 @@ import os
 import random
 import re
 import requests
-import string
-import traceback
 import urllib.parse
 
 
 ENV_TOKEN = "token"
 ENV_RAPIDAPI_TOKEN = "rapidapi_token"
+ENV_STEAMAPI_TOKEN = "steamapi_token"
 ENV_DB_HOST = "MONGO_HOST"
 ENV_DB_PORT = "MONGO_PORT"
 ENV_DB_USER = "MONGO_INITDB_ROOT_USERNAME"
@@ -20,6 +19,7 @@ ENV_DB_PASS = "MONGO_INITDB_ROOT_PASSWORD"
 ENV_VARS = [
     ENV_TOKEN,
     ENV_RAPIDAPI_TOKEN,
+    ENV_STEAMAPI_TOKEN,
     ENV_DB_HOST,
     ENV_DB_PORT,
     ENV_DB_USER,
