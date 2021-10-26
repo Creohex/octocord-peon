@@ -343,6 +343,31 @@ async def cmd_steam(message, content, **kwargs):
     await reply(message, cmd_handler(user))
 
 
+async def cmd_punto(message, content, **kwargs):
+    """Attempt to punto switch provided message."""
+
+    key_map = {
+        "a": "ф", "b": "и", "c": "с", "d": "в", "e": "у", "f": "а", "g": "п",
+        "h": "р", "i": "ш", "j": "о", "k": "л", "l": "д", "m": "ь", "n": "т",
+        "o": "щ", "p": "з", "q": "й", "r": "к", "s": "ы", "t": "е", "u": "г",
+        "v": "м", "w": "ц", "x": "ч", "y": "н", "z": "я", ";": "ж", "'": "э",
+        "`": "ё", ",": "б", ".": "ю",
+    }
+    key_map_reversed = {v: k for k,v in key_map.items()}
+
+    if not content:
+        raise Exception("Content required")
+
+    content = content.lower()
+    keys = set(content)
+    latin_count = len([char for char in keys if char in key_map])
+    cyrillic_count = len([char for char in keys if char in key_map_reversed])
+    use_map = key_map if latin_count >= cyrillic_count else key_map_reversed
+
+    switched = "".join(use_map.get(char) or char for char in content)
+    await reply(message, switched)
+
+
 class BaseCommand():
     """Abstract command class."""
 
