@@ -12,6 +12,8 @@ import urllib.parse
 ENV_TOKEN = "token"
 ENV_RAPIDAPI_TOKEN = "rapidapi_token"
 ENV_STEAMAPI_TOKEN = "steamapi_token"
+ENV_TWITCH_CLIENT_ID = "twitch_client_id"
+ENV_TWITCH_CLIENT_SECRET = "twitch_client_secret"
 ENV_DB_HOST = "MONGO_HOST"
 ENV_DB_PORT = "MONGO_PORT"
 ENV_DB_USER = "MONGO_INITDB_ROOT_USERNAME"
@@ -20,6 +22,8 @@ ENV_VARS = [
     ENV_TOKEN,
     ENV_RAPIDAPI_TOKEN,
     ENV_STEAMAPI_TOKEN,
+    ENV_TWITCH_CLIENT_ID,
+    ENV_TWITCH_CLIENT_SECRET,
     ENV_DB_HOST,
     ENV_DB_PORT,
     ENV_DB_USER,
