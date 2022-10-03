@@ -3,6 +3,8 @@ FROM python:3.7.4-slim
 WORKDIR /app
 COPY ./requirements.txt /app
 COPY ./packages /app/packages
+
+RUN pip install --upgrade pip
 RUN pip install /app/packages/steamapi
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
