@@ -1,17 +1,26 @@
-FROM python:3.7.4-slim
+FROM python:3.9.14-alpine3.15
 
 WORKDIR /app
-COPY ./requirements.txt /app
-COPY ./packages /app/packages
 
-RUN pip install --upgrade pip
-RUN pip install /app/packages/steamapi
-RUN pip install --trusted-host pypi.python.org -r requirements.txt
+RUN set -eux; \
+    apk update; \
+    apk add --no-cache bash git wget; \
+    mkdir ./packages; \
+    cd ./packages; \
+    git clone https://github.com/smiley/steamapi;
+
+COPY ./requirements.txt /app
+
+RUN set -eux; \
+    pip install --upgrade pip; \
+    pip install --trusted-host pypi.python.org wheel; \
+    pip install /app/packages/steamapi; \
+    pip install --trusted-host pypi.python.org -r requirements.txt;
 
 EXPOSE 80 443
 
 COPY ./app/init /app/init
 COPY ./app/assets /app/assets
-COPY ./app/peon /usr/local/lib/python3.7/site-packages/peon
+COPY ./app/peon /usr/local/lib/python3.9/site-packages/peon
 
 CMD ["/bin/bash", "./init/entrypoint.sh"]
