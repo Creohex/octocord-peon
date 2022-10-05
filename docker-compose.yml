@@ -1,24 +1,36 @@
 version: '3.7'
 services:
 
-    peon:
+    peon-telegram:
         build:
             context: .
-            dockerfile: ./Dockerfile
-        depends_on:
-            - mongodb-server
+            dockerfile: ./Dockerfile_telegram
+        # depends_on:
+            # - mongodb-server
         env_file:
             - .env
             - .db.env
         volumes:
             - ./tools:/tools
 
-    mongodb-server:
-        image: mongo:4.2.0
-        container_name: mongodb-server
+    peon-discord:
+        build:
+            context: .
+            dockerfile: ./Dockerfile_discord
+        # depends_on:
+            # - mongodb-server
         env_file:
+            - .env
             - .db.env
         volumes:
-            - ./db/data:/data/db
-        ports:
-            - '27017:27017'
+            - ./tools:/tools
+
+    # mongodb-server:
+    #     image: mongo:4.2.0
+    #     container_name: mongodb-server
+    #     env_file:
+    #         - .db.env
+    #     volumes:
+    #         - ./db/data:/data/db
+    #     ports:
+    #         - '27017:27017'
