@@ -1,2 +1,2 @@
-flake8==3.5.0
-flake8-quotes==1.0.0
+flake8 == 3.5.0
+flake8-quotes == 1.0.0
