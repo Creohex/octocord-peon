@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import time
-from peon.db import check_connection
+from peon_common.db import check_connection
 
 
 def await_db(retries=10):
@@ -23,4 +23,4 @@ def await_db(retries=10):
 
 
 if __name__ == "__main__":
-    await_db()
+    await_db(retries=20)

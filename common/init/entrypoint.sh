@@ -14,14 +14,18 @@ if [ "$?" != 0 ]; then
     exit 1
 fi
 
-echo "Awaiting db startup..."
-python -u $SCRIPTS/await_db.py
+echo "Checking database availability..."
+if [ "$DB_ENABLED" == "true" ]; then
+    python -u $SCRIPTS/await_db.py
+else
+    echo "Database availability skipped. (DB_ENABLED != true)"
+fi
 
-if [ $? == 0 ]; then
+if [ $? != 0 ]; then
     echo "Error! DB not available, exiting..."
     exit 2
 fi
 
 # application:
-python -u $SCRIPTS/start_peon.py
+python -u $SCRIPTS/start.py
 echo "App terminated (code=$?)."

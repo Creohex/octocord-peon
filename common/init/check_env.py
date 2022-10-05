@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from peon.utils import get_env_vars
+from peon_common.utils import get_env_vars
 
 
 if __name__ == "__main__":

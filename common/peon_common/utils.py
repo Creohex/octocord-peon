@@ -9,21 +9,25 @@ import requests
 import urllib.parse
 
 
-ENV_TOKEN = "token"
-ENV_RAPIDAPI_TOKEN = "rapidapi_token"
-ENV_STEAMAPI_TOKEN = "steamapi_token"
+ENV_TOKEN_DISCORD = "discord_token"
+ENV_TOKEN_TELEGRAM = "telegram_token"
+ENV_TOKEN_RAPIDAPI = "rapidapi_token"
+ENV_TOKEN_STEAMAPI = "steamapi_token"
 ENV_TWITCH_CLIENT_ID = "twitch_client_id"
 ENV_TWITCH_CLIENT_SECRET = "twitch_client_secret"
+ENV_DB_ENABLED = "DB_ENABLED"
 ENV_DB_HOST = "MONGO_HOST"
 ENV_DB_PORT = "MONGO_PORT"
 ENV_DB_USER = "MONGO_INITDB_ROOT_USERNAME"
 ENV_DB_PASS = "MONGO_INITDB_ROOT_PASSWORD"
 ENV_VARS = [
-    ENV_TOKEN,
-    ENV_RAPIDAPI_TOKEN,
-    ENV_STEAMAPI_TOKEN,
+    ENV_TOKEN_DISCORD,
+    ENV_TOKEN_TELEGRAM,
+    ENV_TOKEN_RAPIDAPI,
+    ENV_TOKEN_STEAMAPI,
     ENV_TWITCH_CLIENT_ID,
     ENV_TWITCH_CLIENT_SECRET,
+    ENV_DB_ENABLED,
     ENV_DB_HOST,
     ENV_DB_PORT,
     ENV_DB_USER,
@@ -72,10 +76,7 @@ ICOSAHEDRON = [
 
 
 def get_env_vars():
-    """
-    Check if required environment variables are
-    set and return dict containing them.
-    """
+    """Check if required env vars are set and return dict containing them."""
 
     missing_variables = [_ for _ in ENV_VARS if _ not in os.environ.keys()]
     if len(missing_variables) > 0:
@@ -90,13 +91,26 @@ def get_file(name, mode="rb"):
     return open("{0}/{1}".format(ASSETS_FOLDER, name), mode).read()
 
 
-# ------ NOTE: temporary entities (awaiting db implementation)
 langs = ["af", "ga", "sq", "it", "ar", "ja", "az", "kn", "eu", "ko", "bn", "la",
          "be", "lv", "bg", "lt", "ca", "mk", "ms", "mt", "hr", "no", "cs", "fa",
          "da", "pl", "nl", "pt", "en", "ro", "eo", "ru", "et", "sr", "tl", "sk",
          "fi", "sl", "fr", "es", "gl", "sw", "ka", "sv", "de", "ta", "el", "te",
          "gu", "th", "ht", "tr", "iw", "uk", "hi", "ur", "hu", "vi", "is", "cy",
          "id", "yi"]
+translit_map = {
+    "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "e", "ж": "zh",
+    "з": "z", "и": "i", "й": "y", "к": "k", "л": "l", "м": "m", "н": "n", "о": "o",
+    "п": "p", "р": "r", "с": "s", "т": "t", "у": "u", "ф": "f", "х": "h", "ц": "ts",
+    "ч": "ch", "ш": "sh", "щ": "sh'", "ы": "y", "э": "e", "ю": "yu", "я": "ya",
+}
+punto_map = {
+    "a": "ф", "b": "и", "c": "с", "d": "в", "e": "у", "f": "а", "g": "п",
+    "h": "р", "i": "ш", "j": "о", "k": "л", "l": "д", "m": "ь", "n": "т",
+    "o": "щ", "p": "з", "q": "й", "r": "к", "s": "ы", "t": "е", "u": "г",
+    "v": "м", "w": "ц", "x": "ч", "y": "н", "z": "я", ";": "ж", "'": "э",
+    "`": "ё", ",": "б", ".": "ю",
+}
+punto_map_reversed = {v: k for k,v in punto_map.items()}
 tr_endpoints = {
     "clients5": {
         "url_template": "https://clients5.google.com/translate_a/t?"
@@ -146,7 +160,7 @@ generic_grats = [
     "Incredible!", "Absolutely gorgeous outcome!", "Well done!"
 ]
 ascii_ascending_luminance = ".,-~:;=!*#$@"
-# ------
+
 
 def de_latinize(text):
     """Switch similar latin chars with cyrillic analogues.
@@ -202,7 +216,7 @@ def normalize_text(
 
 
 def translate(text, lang_from=None, lang_to=None, endpoint="translate"):
-    """Translator."""
+    """Translate text."""
 
     text = urllib.parse.quote(text)
     lang_from = lang_from or "auto"
@@ -318,6 +332,12 @@ def slot_sequence(emojis, slots=3, seq_len=8):
     return sequence, success
 
 
+def ask_8ball():
+    """Fetch random 8ball message."""
+
+    return random.choice(ICOSAHEDRON)
+
+
 def format_emoji(emoji):
     """Format emojis so they render properly once sent."""
 
@@ -363,13 +383,14 @@ def urban_query(token, query):
         params=params,
     )
     res = json.loads(request.text)
+
     if len(res["list"]):
         descr = res["list"][0]
         mask = r'\[|\]'
         return (descr["word"], re.sub(mask, '', descr["definition"]),
                 re.sub(mask, '', descr["example"]), descr["permalink"])
-    else:
-        return None
+
+    return None
 
 
 def is_morse(text):
@@ -404,3 +425,20 @@ def to_morse(text):
     """Convert text to morse code."""
 
     return " ".join(MORSE_CODE[_] for _ in text)
+
+
+def punto(text):
+    """Attempt to punto switch provided text."""
+
+    keys = set(text)
+    latin_count = len([char for char in keys if char in punto_map])
+    cyrillic_count = len([char for char in keys if char in punto_map_reversed])
+    use_map = punto_map if latin_count >= cyrillic_count else punto_map_reversed
+
+    return "".join(use_map.get(char, char) for char in text)
+
+
+def translitify(text):
+    """Attempt to convert content into gibberish translit."""
+
+    return "".join([translit_map.get(char) or char for char in text])

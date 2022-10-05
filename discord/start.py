@@ -1,7 +1,9 @@
+#!/usr/bin/env python3
+
 import time
 import traceback
 
-from peon.app import Peon
+from peon_discord.client import Peon
 
 
 def start():

@@ -12,7 +12,7 @@ from pymongo.errors import (
     WTimeoutError,
 )
 
-from peon.utils import (
+from .utils import (
     get_env_vars,
     ENV_DB_USER,
     ENV_DB_PASS,
