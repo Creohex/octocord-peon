@@ -1,23 +1,22 @@
-import re
-
-from datetime import datetime
+"""..."""
 
 import discord
+from datetime import datetime
 
-from peon import commands, CommandSet, Command, MentionHandler
-from peon.utils import (
+from . import commands, CommandSet, Command, MentionHandler
+from peon_common.utils import (
     get_env_vars,
     get_file,
-    ENV_TOKEN,
+    ENV_TOKEN_DISCORD,
 )
 
 
 class Peon():
-    """Peon."""
+    """Discord Peon client."""
 
     NAME = "Peon"
     GAME_NAME = "work work"
-    AVATAR = get_file("{0}.png".format(NAME))
+    AVATAR = get_file(f"{NAME}.png")
     __INSTANCE = None
 
     @property
@@ -75,8 +74,11 @@ class Peon():
             Command("punto", commands.cmd_punto,
                     description="attempt to decipher text written in incorrect layout",
                     examples=["{0} nbgbxysq fktrctq"]),
-            Command("translitify", commands.cmd_translitify,
+            Command("litify", commands.cmd_translitify,
                     description="turn cyrillic text into latin"),
+            Command("reverse", commands.cmd_reverse,
+                    description="reverse given text",
+                    examples=["{0} olleH"]),
             Command("stats", commands.cmd_stats, description="print various peon stats"),
             MentionHandler(commands.handle_simple_replies),
             MentionHandler(commands.handle_emergency_party_mention),
@@ -84,21 +86,19 @@ class Peon():
         self.start_time = datetime.now()
 
     def run(self):
-        """Run peon."""
+        """Initialize/run discord client."""
 
-        client_params = {
-            "max_messages": 3000,
-            "activity": discord.Game(name=self.GAME_NAME),
-            "heartbeat_timeout": 30,
-        }
-
-        self._client = discord.Client(**client_params)
+        self._client = discord.Client(status="work-work",
+                                      activity=discord.CustomActivity("work-work"),
+                                      max_messages=3000,
+                                      heartbeat_timeout=30.0,
+                                      intents=discord.Intents.all())
 
         @self.client.event
         async def on_ready():
             await self._client.user.edit(username=self.NAME, avatar=self.AVATAR)
             print("Logged in as\n{0}\n{1}\n------".format(
-                self._client.user.name, self.client.user.id))
+                  self._client.user.name, self.client.user.id))
 
         @self.client.event
         async def on_message(message):
@@ -107,4 +107,4 @@ class Peon():
 
             await self.command_set.execute(message)
 
-        self._client.run(self.env_vars[ENV_TOKEN])
+        self._client.run(self.env_vars[ENV_TOKEN_DISCORD])

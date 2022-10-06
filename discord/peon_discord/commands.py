@@ -4,14 +4,12 @@ import os
 import random
 import re
 import time
-
 from abc import abstractmethod
 from datetime import datetime
 
 import nltk.chat.eliza
 import steamapi
-
-from peon import utils
+from peon_common import utils
 
 
 async def reply(message, text):
@@ -176,16 +174,13 @@ async def cmd_slot(message, content, **kwargs):
     await msg.add_reaction(emoji="🎊" if success else "😫")
 
     if success:
-        await reply(
-            message,
-            random.choice(utils.slot_grats).format(
-                utils.format_user(message.author))
-            if random.choice([0,1])
-            else utils.translate(
-                random.choice(utils.generic_grats),
-                lang_from="en", lang_to=random.choice(utils.langs)
-            )["text"]
-        )
+        await reply(message,
+                    random.choice(utils.slot_grats).format(
+                        utils.format_user(message.author))
+                    if random.choice([0,1]) else
+                    utils.translate(random.choice(utils.generic_grats),
+                                    lang_from="en",
+                                    lang_to=random.choice(utils.langs))["text"])
 
 
 async def cmd_wiki(message, content, **kwargs):
@@ -205,7 +200,7 @@ async def cmd_urban(message, content, **kwargs):
     """Query urban dictionary."""
 
     if len(content) > 0:
-        defs = utils.urban_query(os.environ.get(utils.ENV_RAPIDAPI_TOKEN), content)
+        defs = utils.urban_query(os.environ[utils.ENV_TOKEN_RAPIDAPI], content)
         if defs is None:
             await message.add_reaction(emoji="😫")
         else:
@@ -277,7 +272,7 @@ async def cmd_8ball(message, content, **kwargs):
     """Fetch 8ball message."""
 
     await reply(message, "{0} {1}".format(
-        utils.format_user(message.author), random.choice(utils.ICOSAHEDRON)))
+        utils.format_user(message.author), utils.ask_8ball()))
 
 
 async def cmd_steam(message, content, **kwargs):
@@ -318,7 +313,7 @@ async def cmd_steam(message, content, **kwargs):
     }
 
     user_id = user_ids.get(user_name, None)
-    steamapi.core.APIConnection(api_key=os.environ.get(utils.ENV_STEAMAPI_TOKEN),
+    steamapi.core.APIConnection(api_key=os.environ.get(utils.ENV_TOKEN_STEAMAPI),
                                 validate_key=True)
 
     if user_id:
@@ -346,40 +341,25 @@ async def cmd_steam(message, content, **kwargs):
 async def cmd_punto(message, content, **kwargs):
     """Attempt to punto switch provided message."""
 
-    key_map = {
-        "a": "ф", "b": "и", "c": "с", "d": "в", "e": "у", "f": "а", "g": "п",
-        "h": "р", "i": "ш", "j": "о", "k": "л", "l": "д", "m": "ь", "n": "т",
-        "o": "щ", "p": "з", "q": "й", "r": "к", "s": "ы", "t": "е", "u": "г",
-        "v": "м", "w": "ц", "x": "ч", "y": "н", "z": "я", ";": "ж", "'": "э",
-        "`": "ё", ",": "б", ".": "ю",
-    }
-    key_map_reversed = {v: k for k,v in key_map.items()}
-
     if not content:
         raise Exception("Content required")
 
-    content = content.lower()
-    keys = set(content)
-    latin_count = len([char for char in keys if char in key_map])
-    cyrillic_count = len([char for char in keys if char in key_map_reversed])
-    use_map = key_map if latin_count >= cyrillic_count else key_map_reversed
-
-    switched = "".join(use_map.get(char) or char for char in content)
-    await reply(message, switched)
+    await reply(message, utils.punto(content.lower()))
 
 
 async def cmd_translitify(message, content, **kwargs):
     """Attempt to convert content into gibberish translit."""
 
-    char_map = {
-        "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "e", "ж": "zh",
-        "з": "z", "и": "i", "й": "y", "к": "k", "л": "l", "м": "m", "н": "n", "о": "o",
-        "п": "p", "р": "r", "с": "s", "т": "t", "у": "u", "ф": "f", "х": "h", "ц": "ts",
-        "ч": "ch", "ш": "sh", "щ": "sh'", "ы": "y", "э": "e", "ю": "yu", "я": "ya",
-    }
+    await reply(message, utils.translitify(content.lower()))
 
-    translit = "".join([char_map.get(char) or char for char in content.lower()])
-    await reply(message, translit)
+
+async def cmd_reverse(message, content, **kwargs):
+    """Reverse given text."""
+
+    if not content:
+        raise Exception("Content required")
+
+    await reply(message, content[::-1])
 
 
 class BaseCommand():
@@ -490,6 +470,8 @@ class CommandSet():
         """Executes commands in order and terminates after first successful command."""
 
         for command in self.commands:
-            if await command.execute(message, client=self.discord_client,
-                                              command_set=self):
-                return
+            if await command.execute(message,
+                                     client=self.discord_client,
+                                     command_set=self,
+            ):
+                break
