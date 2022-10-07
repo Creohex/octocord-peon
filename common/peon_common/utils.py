@@ -8,6 +8,8 @@ import re
 import requests
 import urllib.parse
 
+from peon_common import exceptions
+
 
 ENV_TOKEN_DISCORD = "discord_token"
 ENV_TOKEN_TELEGRAM = "telegram_token"
@@ -219,20 +221,37 @@ def translate(text, lang_from=None, lang_to=None, endpoint="translate"):
     """Translate text."""
 
     text = urllib.parse.quote(text)
-    lang_from = lang_from or "auto"
-    lang_to = lang_to or "ru"
     if endpoint and endpoint not in tr_endpoints.keys():
         raise Exception(
             "Unsupported endpoint provided. Possible values: {0}".format(
                 ", ".join(list(tr_endpoints.keys()))))
     tr_toolset = tr_endpoints[endpoint]
-    url = tr_toolset["url_template"].format(lang_from, lang_to, text)
+    url = tr_toolset["url_template"].format(lang_from or "auto",
+                                            lang_to or "ru",
+                                            text)
     raw = json.loads(requests.get(url).text)
 
     return {
         "lang": tr_toolset["get_lang"](raw),
         "text": tr_toolset["get_text"](raw),
     }
+
+
+def translate_helper(raw_text):
+    """Helper for translate(), managing prefix configurations."""
+
+    prefix = raw_text.split()[0]
+    text = raw_text[len(prefix)+1:]
+
+    if len(prefix) == 2:
+        return translate(text)
+    elif len(prefix) == 4:
+        return translate(text, lang_to=prefix[2:4])
+    elif len(prefix) == 6:
+        return translate(text, lang_from=prefix[2:4], lang_to=prefix[4:6])
+    else:
+        raise exceptions.CommandMalformed(
+            f"Received invalid translation command '{raw_text}'")
 
 
 def starify(sentence, limit=600):
@@ -269,13 +288,8 @@ def starify(sentence, limit=600):
     return sky
 
 
-def roll(raw):
-    """Roll dice.
-
-    :param str raw: list of raw roll inputs
-
-    :return: roll results
-    """
+def roll(roll_indices: list[str]):
+    """Roll dice."""
 
     dice_limit = 10 ** 30
 
@@ -297,7 +311,7 @@ def roll(raw):
             return ("{0}d{1}:".format(throws, sides),
                     [random.randint(1, sides) for _ in range(throws)])
 
-    rolls = [get_rolls(_) for _ in raw]
+    rolls = [get_rolls(_) for _ in roll_indices]
     text = None
 
     if len(rolls) == 1 and len(rolls[0][1]) == 1:
@@ -356,12 +370,15 @@ def wiki_summary(query):
     :param str query: wiki query
     """
 
-    req = json.loads(requests.get(
-        "https://en.wikipedia.org/api/rest_v1/page/summary/{0}".format(
-            urllib.parse.quote(query))).text)
+    try:
+        req = json.loads(requests.get(
+            "https://en.wikipedia.org/api/rest_v1/page/summary/{0}".format(
+                urllib.parse.quote(query))).text)
 
-    return "{0}:\n{1}\n({2})".format(
-        req["title"], req["extract"], req["content_urls"]["desktop"]["page"])
+        return "{0}:\n{1}\n({2})".format(
+            req["title"], req["extract"], req["content_urls"]["desktop"]["page"])
+    except KeyError:
+        raise exceptions.CommandExecutionError()
 
 
 def urban_query(token, query):
