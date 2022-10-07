@@ -1,10 +1,10 @@
-""""""
+"""Telegram client."""
 
 import logging
+
 from .handlers import HANDLERS
 from peon_common.utils import ENV_TOKEN_TELEGRAM, get_env_vars
-from telegram.ext import ApplicationBuilder, ContextTypes, InlineQueryHandler
-from telegram import InlineQueryResultArticle, InputTextMessageContent, Update
+from telegram.ext import ApplicationBuilder
 
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
