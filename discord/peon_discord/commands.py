@@ -9,7 +9,7 @@ from datetime import datetime
 
 import nltk.chat.eliza
 import steamapi
-from peon_common import utils
+from peon_common import exceptions, utils
 
 
 async def reply(message, text):
@@ -93,24 +93,13 @@ async def cmd_tr(message, content, **kwargs):
     Language parameters must be in 2-char notation.
     """
 
-    prefix = message.content.split()[0]
-    text = message.content[len(prefix)+1:]
-    result = ""
-
-    if len(prefix) == 3:
-        result = utils.translate(text)
-    elif len(prefix) == 5:
-        result = utils.translate(text, lang_to=prefix[3:5])
-    elif len(prefix) == 7:
-        result = utils.translate(text, lang_from=prefix[3:5],
-                                       lang_to=prefix[5:7])
-    else:
+    try:
+        result = utils.translate_helper(message.content[1:])
+        await reply(message, f"({result['lang']}) {result['text']}")
+    except exceptions.CommandMalformed:
         await reply(message,
                     "Correct format: !tr <text..> | !tr<lang_to> <text..> |"
                     " !tr<lang_from><lang_to> <text..>\n(lang = en|es|fi|ru|...)")
-        return
-
-    await reply(message, "({0}) {1}".format(result["lang"], result["text"]))
 
 
 async def cmd_roll(message, content, **kwargs):
