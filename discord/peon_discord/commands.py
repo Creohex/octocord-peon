@@ -7,7 +7,6 @@ import time
 from abc import abstractmethod
 from datetime import datetime
 
-import nltk.chat.eliza
 from peon_common import exceptions, utils
 
 
@@ -231,7 +230,7 @@ async def cmd_mangle(message, content, **kwargs):
 async def cmd_doc(message, content, **kwargs):
     """Eliza psychotherapist hotline."""
 
-    await reply(message, nltk.chat.eliza.eliza_chatbot.respond(content))
+    await reply(message, utils.doc(content))
 
 
 async def cmd_morse(message, content, **kwargs):

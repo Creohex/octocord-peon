@@ -9,6 +9,7 @@ import requests
 import time
 import urllib.parse
 
+import nltk.chat.eliza
 import steamapi
 
 from peon_common import exceptions
@@ -486,6 +487,13 @@ def steam(query):
             f"Supported commands: {', '.join(steam_commands_mapping.keys())}")
 
     return cmd_handler(user)
+
+
+def doc(text):
+    """Eliza psychotherapist hotline."""
+
+    # TODO: add dialog buffer support
+    return nltk.chat.eliza.eliza_chatbot.respond(text)
 
 
 def is_morse(text):

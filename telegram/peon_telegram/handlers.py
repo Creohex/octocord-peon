@@ -30,7 +30,9 @@ def default_handler(command_override: str = None,
     """Basic handler wrapper."""
 
     def decorator(callable):
-        print(f"DEBUG: registering handler: '{callable.__name__} ({keep_prefix})'")
+        print(f"DEBUG: registering handler: '{callable.__name__} "
+              f"{command_override if command_override else ''} "
+              f"({keep_prefix})'")
         command = command_override or callable.__name__
 
         @functools.wraps(callable)
@@ -143,6 +145,11 @@ def wiki(text):
 @default_handler()
 def urban(text):
     return utils.urban_query(os.environ[utils.ENV_TOKEN_RAPIDAPI], text)
+
+
+@default_handler(reply=True)
+def doc(text):
+    return utils.doc(text)
 
 
 @default_handler(reply=True)
