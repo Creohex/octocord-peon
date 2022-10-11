@@ -122,7 +122,7 @@ def help(text):
 
 @default_handler()
 def roll(text):
-    return f"{text}:\n{utils.roll(text.split())}"
+    return f"{text}:\n{utils.roll(text.replace('+', ' ').split())}"
 
 
 @default_handler(command_override="tr")
