@@ -2,17 +2,10 @@
 
 import functools
 import os
-import random
-import sys
-import re
-import time
-from datetime import datetime
 
 from peon_common import exceptions, utils
 from peon_telegram import constants
 
-import nltk.chat.eliza
-import steamapi
 from telegram import (
     constants as tgconstants,
     InlineQueryResultArticle,
@@ -26,38 +19,13 @@ from telegram.ext import (
 )
 
 
-# class Command:
-#     """..."""
-
-#     def __init__(
-#         self,
-#         callback: callable,
-#         regex: str,
-#         description: str = None,
-#         group: int = None,
-#     ):
-#         self.callback = callback
-#         self.regex = regex
-#         self.description = description
-#         self.group = group
-
-
-# class CustomInlineQueryHandler(InlineQueryHandler):
-#     """..."""
-
-#     def __init__(self, *args, articles, **kwargs):
-#         super().__init__(args, kwargs)
-#         self.articles = articles
-
-
 HANDLERS = []
 """Handlers to be registered in telegram client."""
 
 
-def default_handler(
-    command_override: str = None,
-    keep_prefix: bool = False,
-    reply: bool = False,
+def default_handler(command_override: str = None,
+                    keep_prefix: bool = False,
+                    reply: bool = False,
 ):
     """Basic handler wrapper."""
 
@@ -175,6 +143,31 @@ def wiki(text):
 @default_handler()
 def urban(text):
     return utils.urban_query(os.environ[utils.ENV_TOKEN_RAPIDAPI], text)
+
+
+@default_handler(reply=True)
+def steam(text):
+    try:
+        return utils.steam(text)
+    except exceptions.CommandError as e:
+        return str(e)
+    except:
+        raise
+
+
+@default_handler(reply=True)
+def punto(text):
+    return utils.punto(text)
+
+
+@default_handler(reply=True)
+def translitify(text):
+    return utils.translitify(text.lower())
+
+
+@default_handler(reply=True)
+def reverse(text):
+    return text[::-1]
 
 
 @inline_handler
