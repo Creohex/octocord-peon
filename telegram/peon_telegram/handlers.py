@@ -23,6 +23,7 @@ HANDLERS = []
 """Handlers to be registered in telegram client."""
 
 
+# TODO: input requirement flag/regex?
 def default_handler(command_override: str = None,
                     keep_prefix: bool = False,
                     reply: bool = False,
@@ -143,7 +144,9 @@ def wiki(text):
 
 @default_handler()
 def urban(text):
-    return utils.urban_query(os.environ[utils.ENV_TOKEN_RAPIDAPI], text)
+    word, descr, examples, _ = utils.urban_query(os.environ[utils.ENV_TOKEN_RAPIDAPI],
+                                                 text)
+    return f"{word}:\n{descr}\n\nexamples:\n{examples}"
 
 
 @default_handler(reply=True)
