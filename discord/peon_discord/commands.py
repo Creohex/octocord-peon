@@ -74,7 +74,7 @@ async def cmd_peon(message, content, **kwargs):
 
         descriptions.append(info)
 
-    await reply(message, f"Available commands:\n{'\n'.join(descriptions)}")
+    await reply(message, "Available commands:\n{0}".format("\n".join(descriptions)))
 
 
 async def cmd_test(message, content, **kwargs):
