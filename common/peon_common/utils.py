@@ -91,7 +91,7 @@ def get_env_vars():
 def get_file(name, mode="rb"):
     """Returns existing file as bytes."""
 
-    return open("{0}/{1}".format(ASSETS_FOLDER, name), mode).read()
+    return open(f"{ASSETS_FOLDER}/{name}", mode).read()
 
 
 langs = ["af", "ga", "sq", "it", "ar", "ja", "az", "kn", "eu", "ko", "bn", "la",
@@ -223,9 +223,8 @@ def translate(text, lang_from=None, lang_to=None, endpoint="translate"):
 
     text = urllib.parse.quote(text)
     if endpoint and endpoint not in tr_endpoints.keys():
-        raise Exception(
-            "Unsupported endpoint provided. Possible values: {0}".format(
-                ", ".join(list(tr_endpoints.keys()))))
+        endpoints = ", ".join(list(tr_endpoints.keys()))
+        raise Exception(f"Unsupported endpoint provided. Possible values: {endpoints}")
     tr_toolset = tr_endpoints[endpoint]
     url = tr_toolset["url_template"].format(lang_from or "auto",
                                             lang_to or "ru",
@@ -319,9 +318,9 @@ def roll(roll_indices: list[str]):
             left, right = (int(value) for value in re.split(r'-', s))
             if left > dice_limit or right > dice_limit:
                 raise Exception("range value(s) are too high")
-            return ("{0}-{1}:".format(left, right), [random.randint(left, right)])
+            return (f"{left}-{right}:", [random.randint(left, right)])
         else:
-            roll_params = re.split(r'd', s if "d" in s else "d{0}".format(s))
+            roll_params = re.split(r'd', s if "d" in s else f"d{s}")
             throws = 1 if roll_params[0] == '' else int(roll_params[0])
             sides = int(roll_params[1])
             if sides == 0:
@@ -329,21 +328,21 @@ def roll(roll_indices: list[str]):
             if throws > 100 or sides > dice_limit:
                 raise Exception("dice size/throw count is too high")
 
-            return ("{0}d{1}:".format(throws, sides),
+            return (f"{throws}d{sides}:",
                     [random.randint(1, sides) for _ in range(throws)])
 
     rolls = [get_rolls(_) for _ in roll_indices]
     text = None
 
     if len(rolls) == 1 and len(rolls[0][1]) == 1:
-        text = "rolls: {0}".format(rolls[0][1][0])
+        text = f"rolls: {rolls[0][1][0]}"
     else:
         text = "rolls:\n"
         total = 0
         for label, value in rolls:
-            text += "{0} {1}\n".format(label, ', '.join([str(_) for _ in value]))
+            text += f"{label} {', '.join([str(_) for _ in value])}\n"
             total += sum(value)
-        text += "---\ntotal: {0}".format(total)
+        text += f"---\ntotal: {total}"
 
     return text
 
@@ -355,8 +354,7 @@ def slot_sequence(emojis, slots=3, seq_len=8):
     """
 
     if len(emojis) < slots:
-        raise Exception(
-            "Not enough static emojis ({0}).".format(len(emojis)))
+        raise Exception(f"Not enough static emojis ({len(emojis)}).")
 
     emojis = [format_emoji(e) for e in emojis]
     sample = [emojis.pop(emojis.index(random.choice(emojis))) for _ in range(slots)]
@@ -376,13 +374,13 @@ def ask_8ball():
 def format_emoji(emoji):
     """Format emojis so they render properly once sent."""
 
-    return "<:{0.name}:{0.id}>".format(emoji)
+    return f"<:{emoji.name}:{emoji.id}>"
 
 
 def format_user(user):
     """Proper user format for chat."""
 
-    return "<@{0}>".format(user.id)
+    return f"<@{user.id}>"
 
 
 def wiki_summary(query):
@@ -391,13 +389,11 @@ def wiki_summary(query):
     :param str query: wiki query
     """
 
+    uri = f"https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(query)}"
     try:
-        req = json.loads(requests.get(
-            "https://en.wikipedia.org/api/rest_v1/page/summary/{0}".format(
-                urllib.parse.quote(query))).text)
-
-        return "{0}:\n{1}\n({2})".format(
-            req["title"], req["extract"], req["content_urls"]["desktop"]["page"])
+        req = json.loads(requests.get(uri).text)
+        return (f"{req['title']}:\n{req['extract']}\n"
+                f"({req['content_urls']['desktop']['page']})")
     except KeyError:
         raise exceptions.CommandExecutionError()
 

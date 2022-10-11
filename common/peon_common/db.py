@@ -25,7 +25,7 @@ def check_connection(db_name="conn_check"):
 
     try:
         db = Database(db_name)
-        db["{0}_test_coll".format(db_name)].insert({"bla": "bla"})
+        db[f"{db_name}_test_coll"].insert({"bla": "bla"})
         db.drop()
     except:
         return False
@@ -102,10 +102,9 @@ class Database(object):
     def _connect(self):
         """Returns a connection to MongoDB."""
 
-        connection = pymongo.MongoClient("mongodb://{0}:{1}@{2}".format(
-            self.__env_vars[ENV_DB_USER],
-            self.__env_vars[ENV_DB_PASS],
-            self.__env_vars[ENV_DB_HOST]))
+        connection = pymongo.MongoClient(
+            f"mongodb://{self.__env_vars[ENV_DB_USER]}:"
+            f"{self.__env_vars[ENV_DB_PASS]}@{self.__env_vars[ENV_DB_HOST]}")
 
         return connection
 

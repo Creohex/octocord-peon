@@ -97,8 +97,7 @@ class Peon():
         @self.client.event
         async def on_ready():
             await self._client.user.edit(username=self.NAME, avatar=self.AVATAR)
-            print("Logged in as\n{0}\n{1}\n------".format(
-                  self._client.user.name, self.client.user.id))
+            print(f"Logged in as\n{self._client.user.name}\n{self.client.user.id}\n-----")
 
         @self.client.event
         async def on_message(message):

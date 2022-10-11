@@ -17,7 +17,7 @@ async def reply(message, text):
 
     if text:
         if isinstance(text, str) and len(text) > 2000:
-            text = "{0}...".format(text[:1996])
+            text = f"{text[:1996]}..."
 
         return await message.channel.send(text)
 
@@ -49,9 +49,10 @@ async def handle_emergency_party_mention(message, **kwargs):
                     members.append(m)
 
         if len(members) > 0:
-            await reply(message,
-                        "{0} {1}".format(random.choice(members).mention,
-                                         random.choice(utils.emergency_phrases)))
+            person = random.choice(members).mention
+            phrase = random.choice(utils.emergency_phrases)
+
+            await reply(message, f"{person} {phrase}")
             return True
 
     return False
@@ -67,20 +68,21 @@ async def cmd_peon(message, content, **kwargs):
     for command in commands:
         info = command.prefix_full
         if command.description:
-            info = "{0} - {1}".format(info, command.description)
+            info = f"{info} - {command.description}"
         if command.examples:
-            info = "{0}\n\t{1}".format(info, "\n\t".join(
-                [example.format(command.prefix_full) for example in command.examples]))
+            examples = "\n\t".join([example.format(command.prefix_full)
+                                    for example in command.examples])
+            info = f"{info}\n\t{examples}"
 
         descriptions.append(info)
 
-    await reply(message, "Available commands:\n{0}".format("\n".join(descriptions)))
+    await reply(message, f"Available commands:\n{'\n'.join(descriptions)}")
 
 
 async def cmd_test(message, content, **kwargs):
     """Test function."""
 
-    await reply(message, "test - {0}".format(content))
+    await reply(message, f"test - {content}")
 
 
 async def cmd_tr(message, content, **kwargs):
@@ -119,7 +121,7 @@ async def cmd_roll(message, content, **kwargs):
 
     try:
         if not len(raw):
-            raise Exception("Args required (cmd: {0})".format(text))
+            raise Exception(f"Args required (cmd: {text})")
 
         if "l" in raw[0]:
             real_alexeys = [utils.format_emoji(e)
@@ -194,7 +196,7 @@ async def cmd_urban(message, content, **kwargs):
             await message.add_reaction(emoji="😫")
         else:
             word, description, examples, _ = defs
-            text = "{0}:\n{1}\n\nexamples:\n{2}".format(word, description, examples)
+            text = f"{word}:\n{description}\n\nexamples:\n{examples}"
             await reply(message, text)
 
 
@@ -218,7 +220,7 @@ async def cmd_stats(message, content, **kwargs):
     data["private channels"] = len(client.private_channels)
     data["voice clients"] = len(client.voice_clients)
 
-    await reply(message, "\n".join("{0}: {1}".format(k, v) for k, v in data.items()))
+    await reply(message, "\n".join(f"{k}: {v}" for k, v in data.items()))
 
 
 async def cmd_mangle(message, content, **kwargs):
@@ -244,8 +246,7 @@ async def cmd_morse(message, content, **kwargs):
 async def cmd_8ball(message, content, **kwargs):
     """Fetch 8ball message."""
 
-    await reply(message, "{0} {1}".format(
-        utils.format_user(message.author), utils.ask_8ball()))
+    await reply(message, f"{utils.format_user(message.author)} {utils.ask_8ball()}")
 
 
 async def cmd_steam(message, content, **kwargs):
@@ -359,7 +360,7 @@ class Command(BaseCommand):
     def prefix_full(self):
         """Returns complete prefix."""
 
-        return "{0}{1}".format(self.CMD_SIGN, self.prefix)
+        return f"{self.CMD_SIGN}{self.prefix}"
 
     @property
     def content_offset(self):
@@ -378,7 +379,7 @@ class Command(BaseCommand):
         super(Command, self).__init__(**kwargs)
 
         if not isinstance(prefix, str):
-            raise Exception("prefix '{0}' is not a string!".format(prefix))
+            raise Exception(f"prefix '{prefix}' is not a string!")
         if not callable(func) or func.__code__.co_argcount != 2:
             raise Exception(
                 "'func' must be a function with strictly two positional args!")
