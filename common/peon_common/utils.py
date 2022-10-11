@@ -291,8 +291,8 @@ def mangle(text, resulting_lang="ru", hops=4):
         raise Exception(f"Text is too long! (>{max_len}):\n{text}")
 
     lang_from = "auto"
-    langs = set(langs).difference(["ru"])
-    lang_sequence = random.sample(langs, k=hops) + [resulting_lang]
+    lang_set = set(langs).difference(["ru"])
+    lang_sequence = random.sample(lang_set, k=hops) + [resulting_lang]
 
     for l in lang_sequence:
         translated = translate(text, lang_from=lang_from, lang_to=l)
