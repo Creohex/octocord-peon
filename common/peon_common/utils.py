@@ -9,6 +9,8 @@ import requests
 import time
 import urllib.parse
 
+import steamapi
+
 from peon_common import exceptions
 
 
@@ -129,6 +131,32 @@ tr_endpoints = {
     },
 }
 d = lambda _: binascii.a2b_hex(_).decode('utf8')
+steam_users = {
+    "creohex": {"userid": 76561198044030521},
+    "fringe": {"userid": 76561198060131971},
+    "gorelka": {"userurl": "PIZERok"},
+    "dronxd": {"userid": 76561198017345589},
+    "dakorher": {"userurl": "Dakorher"},
+    "ankarnamir": {"userid": 76561198011087208},
+    "dees": {"userid": 76561198011748348},
+    "sashoker": {"userurl": "Sashoker"},
+}
+steam_commands_mapping = {
+    "id": lambda user: user.id,
+    "name": lambda user: user.real_name,
+    "profile": lambda user: user.profile_url,
+    "fiend_count": lambda user: len(user.friends),
+    "friends": lambda user: ", ".join(friend.name for friend in user.friends),
+    "avatar": lambda user: user.avatar_medium,
+    "avatar_big": lambda user: user.avatar_full,
+    "last_online": lambda user: user.last_logoff,
+    "level": lambda user: user.level,
+    "currently_playing": lambda user: user.currently_playing,
+    "game_count": lambda user: len(user.games),
+    "owned_game_count": lambda user: len(user.owned_games),
+    "vac": lambda user: str(user.is_vac_banned),
+    "game_bans": lambda user: user.number_of_vac_bans,
+}
 default_chance = 15
 simple_replies_collection = {"specific_name": [50, [""]]}
 role_emergency = "<@&453948742710722569>"
@@ -425,6 +453,39 @@ def urban_query(token, query):
                 re.sub(mask, '', descr["example"]), descr["permalink"])
 
     return None
+
+
+def steam(query):
+    """Steam API integration."""
+
+    if not re.match(r"^\w+\s\w+", query):
+        raise exceptions.CommandMalformed("expecting: '<user> <command> <_args>'")
+
+    user_name, cmd, *_ = query.split()
+
+    user_id = steam_users.get(user_name, None)
+    steamapi.core.APIConnection(api_key=os.environ.get(ENV_TOKEN_STEAMAPI),
+                                validate_key=True)
+
+    if user_id:
+        user = steamapi.user.SteamUser(**user_id)
+    else:
+        try:
+            try:
+                user_id = {"userid": int(user_name)}
+            except ValueError:
+                user_id = {"userurl": user_name}
+
+            user = steamapi.user.SteamUser(**user_id)
+        except steamapi.errors.UserNotFoundError:
+            raise exceptions.CommandExecutionError(f"user '{user_name}' not found.")
+
+    cmd_handler = steam_commands_mapping.get(cmd, None)
+    if cmd_handler is None:
+        raise exceptions.CommandMalformed(
+            f"Supported commands: {', '.join(steam_commands_mapping.keys())}")
+
+    return cmd_handler(user)
 
 
 def is_morse(text):

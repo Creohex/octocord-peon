@@ -1,4 +1,4 @@
-"""..."""
+"""Discord client."""
 
 import discord
 from datetime import datetime
