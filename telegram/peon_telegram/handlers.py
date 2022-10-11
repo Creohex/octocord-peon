@@ -149,6 +149,11 @@ def translate(text):
                 "/tr <lang_from> <lang_to> <text..>\nlangs: en, es, fi, ru, ...")
 
 
+@default_handler(reply=True)
+def mangle(text):
+    return utils.mangle(text)
+
+
 @default_handler()
 def starify(text):
     return utils.starify(text)

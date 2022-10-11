@@ -6,6 +6,7 @@ import os
 import random
 import re
 import requests
+import time
 import urllib.parse
 
 from peon_common import exceptions
@@ -252,6 +253,26 @@ def translate_helper(raw_text):
     else:
         raise exceptions.CommandMalformed(
             f"Received invalid translation command '{raw_text}'")
+
+
+def mangle(text, resulting_lang="ru", hops=4):
+    """Scrambles text by consequently translating through multiple random languages."""
+
+    max_len = 800
+    if len(text) > max_len:
+        raise Exception(f"Text is too long! (>{max_len}):\n{text}")
+
+    lang_from = "auto"
+    langs = set(langs).difference(["ru"])
+    lang_sequence = random.sample(langs, k=hops) + [resulting_lang]
+
+    for l in lang_sequence:
+        translated = translate(text, lang_from=lang_from, lang_to=l)
+        lang_from = l
+        text = translated["text"]
+        time.sleep(0.12)
+
+    return text
 
 
 def starify(sentence, limit=600):

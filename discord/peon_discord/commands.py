@@ -222,25 +222,9 @@ async def cmd_stats(message, content, **kwargs):
 
 
 async def cmd_mangle(message, content, **kwargs):
-    """Scramble text by consequently translating through multiple languages."""
+    """Mangle command wrapper."""
 
-    content_max_length = 800
-    if len(content) > content_max_length:
-        raise Exception("Content too long! (>{0}):\n{1}".format(
-            content_max_length, content))
-
-    text = content
-    lang_from = "auto"
-    langs = set(utils.langs).difference(["ru"])
-    lang_sequence = random.sample(langs, k=4) + ["ru"]
-
-    for l in lang_sequence:
-        translated = utils.translate(text, lang_from=lang_from, lang_to=l)
-        lang_from = l
-        text = translated["text"]
-        time.sleep(0.15)
-
-    await reply(message, text)
+    await reply(message, utils.mangle(content))
 
 
 async def cmd_doc(message, content, **kwargs):
