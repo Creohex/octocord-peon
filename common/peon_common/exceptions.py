@@ -28,3 +28,8 @@ class CommandMalformed(CommandError):
 class CommandExecutionError(CommandError):
     def __init__(self, message=None):
         super().__init__(message)
+
+
+class CommandAccessRestricted(CommandError):
+    def __init__(self, message=None):
+        super().__init__(message)

@@ -9,3 +9,6 @@ PREFIX = "/"
 
 MSG_MAX_CHARACTERS = 4096
 """Maximum amount of characters supported in a message."""
+
+USER_NAME_REGEX = r"^@\w+$"
+"""Telegram user name format regex."""
