@@ -7,7 +7,11 @@ from datetime import datetime
 
 from peon_common import exceptions, utils
 from peon_telegram import constants
-from peon_common.exceptions import CommandAccessRestricted, CommandMalformed
+from peon_common.exceptions import (
+    CommandAccessRestricted,
+    CommandExecutionError,
+    CommandMalformed,
+)
 
 from telegram import (
     constants as tgconstants,
@@ -85,6 +89,11 @@ def default_handler(command_override: str = None,
                                                text="Admin privileges required.",
                                                reply_to_message_id=update.message.id)
                 print(type(car))
+            except CommandExecutionError as cee:
+                await context.bot.send_message(chat_id=update.effective_chat.id,
+                                               text="Command unsuccessful.",
+                                               reply_to_message_id=update.message.id)
+                print(type(cee))
             except Exception as e:
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id,
