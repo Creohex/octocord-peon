@@ -156,6 +156,12 @@ def translate(text):
     return f"({result['lang']}) {result['text']}"
 
 
+@default_handler(require_input=True,
+                 examples=["hello", "--. .. -... -... . .-. .. ... ...."])
+def morse(text):
+    return utils.morse_helper(text)
+
+
 @default_handler(reply=True,
                  require_input=True,
                  examples=["unstoppable force vs immovable object"])
