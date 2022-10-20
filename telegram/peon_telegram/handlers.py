@@ -143,9 +143,10 @@ def translate(text):
     lang_to = None
 
     if words and len(words[0]) == 2 and words[0] in utils.langs:
-        lang_from = words[0]
+        lang_to = words[0]
         del words[0]
     if words and len(words[0]) == 2 and words[0] in utils.langs:
+        lang_from = lang_to
         lang_to = words[0]
         del words[0]
     if not words:
