@@ -12,7 +12,10 @@ import urllib.parse
 import nltk.chat.eliza
 import steamapi
 
-from peon_common import exceptions
+from peon_common.exceptions import (
+    CommandExecutionError,
+    CommandMalformed,
+)
 
 
 ENV_TOKEN_DISCORD = "discord_token"
@@ -280,7 +283,7 @@ def translate_helper(raw_text):
     elif len(prefix) == 6:
         return translate(text, lang_from=prefix[2:4], lang_to=prefix[4:6])
     else:
-        raise exceptions.CommandMalformed(
+        raise CommandMalformed(
             f"Received invalid translation command '{raw_text}'")
 
 
@@ -425,7 +428,7 @@ def wiki_summary(query):
         return (f"{req['title']}:\n{req['extract']}\n"
                 f"({req['content_urls']['desktop']['page']})")
     except KeyError:
-        raise exceptions.CommandExecutionError()
+        raise CommandExecutionError()
 
 
 def urban_query(token, query):
@@ -461,7 +464,7 @@ def steam(query):
     """Steam API integration."""
 
     if not re.match(r"^\w+\s\w+", query):
-        raise exceptions.CommandMalformed("expecting: '<user> <command> <_args>'")
+        raise CommandMalformed("expecting: '<user> <command> <_args>'")
 
     user_name, cmd, *_ = query.split()
 
@@ -480,11 +483,11 @@ def steam(query):
 
             user = steamapi.user.SteamUser(**user_id)
         except steamapi.errors.UserNotFoundError:
-            raise exceptions.CommandExecutionError(f"user '{user_name}' not found.")
+            raise CommandExecutionError(f"user '{user_name}' not found.")
 
     cmd_handler = steam_commands_mapping.get(cmd, None)
     if cmd_handler is None:
-        raise exceptions.CommandMalformed(
+        raise CommandMalformed(
             f"Supported commands: {', '.join(steam_commands_mapping.keys())}")
 
     return cmd_handler(user)
@@ -513,13 +516,17 @@ def is_morse(text):
 def from_morse(text):
     """Convert morse code to text."""
 
+    if not isinstance(text, str):
+        raise CommandMalformed()
+
     words = text.split("  ") if "  " in text else [text]
     words_translated = []
+    morse_map = MORSE_CODE.items()
 
     for word in (w.strip() for w in words):
         if word:
             words_translated.append(
-                "".join(next(k for k, v in MORSE_CODE.items() if v == char)
+                "".join(next((k for k, v in morse_map if v == char), "")
                         for char in word.split()))
 
     return " ".join(words_translated)
@@ -529,6 +536,15 @@ def to_morse(text):
     """Convert text to morse code."""
 
     return " ".join(MORSE_CODE[_] for _ in text)
+
+
+def morse_helper(text):
+    """Helper method for morse code translation."""
+
+    if is_morse(text):
+        return from_morse(text)
+    else:
+        return to_morse(text)
 
 
 def punto(text):
