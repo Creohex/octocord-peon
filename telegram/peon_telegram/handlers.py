@@ -237,6 +237,11 @@ def reverse(text):
     return text[::-1]
 
 
+@default_handler(admin=True, command_override="r")
+def resource_usage(text):
+    return utils.resource_usage(text)
+
+
 @inline_handler
 def inline_test(query):
     return [

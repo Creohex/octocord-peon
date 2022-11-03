@@ -6,10 +6,12 @@ import os
 import random
 import re
 import requests
+import socket
 import time
 import urllib.parse
 
 import nltk.chat.eliza
+import psutil
 import steamapi
 
 from peon_common.exceptions import (
@@ -45,6 +47,7 @@ ENV_VARS = [
 ]
 """Required environment variables."""
 
+BYTES_GB = 2 ** 30
 
 ASSETS_FOLDER = "/app/assets"
 
@@ -562,3 +565,19 @@ def translitify(text):
     """Attempt to convert content into gibberish translit."""
 
     return "".join([translit_map.get(char) or char for char in text])
+
+
+def resource_usage(text):
+    """Returns host system resource usage."""
+
+    def mem_summary(resource):
+        return (f"{round(resource.percent, 1)}% "
+                f"({round(resource.used / BYTES_GB, 2)}GB/"
+                f"{round(resource.total / BYTES_GB, 2)}GB)")
+
+    cpu_avg = psutil.getloadavg()[-1] / psutil.cpu_count() * 100
+    return (f"{socket.gethostname()}:\n"
+            f"CPU: {round(cpu_avg, 1)}% ({os.cpu_count()} cores)\n"
+            f"RAM: {mem_summary(psutil.virtual_memory())}\n"
+            f"swap: {mem_summary(psutil.swap_memory())}\n"
+            f"disk: {mem_summary(psutil.disk_usage('/'))}")
