@@ -3,8 +3,8 @@ services:
 
     peon-telegram:
         build:
-            context: .
-            dockerfile: ./Dockerfile_telegram
+            context: ./
+            dockerfile: ./peon_telegram/Dockerfile
         # depends_on:
             # - mongodb-server
         env_file:
@@ -15,8 +15,8 @@ services:
 
     peon-discord:
         build:
-            context: .
-            dockerfile: ./Dockerfile_discord
+            context: ./
+            dockerfile: ./peon_discord/Dockerfile
         # depends_on:
             # - mongodb-server
         env_file:
