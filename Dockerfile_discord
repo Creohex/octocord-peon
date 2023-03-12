@@ -2,30 +2,22 @@ FROM python:3.9.14-alpine3.15
 
 WORKDIR /app
 
-COPY ./requirements.txt /app
-COPY ./requirements-repos.txt /app
-
 RUN set -eux; \
     apk update; \
     apk add --no-cache bash git wget openssh-client build-base linux-headers; \
-    mkdir -m 700 -p packages; \
-    cd ./packages; \
-    for link in $(cat /app/requirements-repos.txt); do \
-        git clone $link --no-tags ; \
-    done;
+    pip install --upgrade pip;
+
+COPY ./peon_common /packages/peon_common
+COPY ./peon_discord /packages/peon_discord
 
 RUN set -eux; \
-    pip install --upgrade pip; \
-    pip install --trusted-host pypi.python.org -r requirements.txt; \
-    pip install packages/*; \
-    rm -rf packages;
+    pip install /packages/peon_common; \
+    pip install /packages/peon_discord;
+
+RUN set -eux; \
+    cp /packages/peon_discord/start.py /app/; \
+    cp -r /packages/peon_common/assets /app/
 
 EXPOSE 80 443
 
-COPY ./common/init/ /app/init
-COPY ./common/assets/ /app/assets
-COPY ./common/peon_common /usr/local/lib/python3.9/site-packages/peon_common
-COPY ./discord/start.py /app/init
-COPY ./discord/peon_discord /usr/local/lib/python3.9/site-packages/peon_discord
-
-CMD ["/bin/bash", "./init/entrypoint.sh"]
+CMD ["/bin/bash", "/packages/peon_common/init/entrypoint.sh"]

@@ -2,7 +2,7 @@
 
 set -e
 
-SCRIPTS=$(pwd)/init
+SCRIPTS="$(dirname -- "${BASH_SOURCE[0]}")"
 echo "Starting..."
 
 # checks:
@@ -27,5 +27,5 @@ if [ $? != 0 ]; then
 fi
 
 # application:
-python -u $SCRIPTS/start.py
+python -u /app/start.py
 echo "App terminated (code=$?)."
