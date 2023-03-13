@@ -48,7 +48,7 @@ def default_handler(command_override: str = None,
 
     def decorator(callable):
         command = command_override or callable.__name__
-        print("DEBUG: registering handler: {command}")
+        print(f"DEBUG: registering handler: {command}")
 
         @functools.wraps(callable)
         async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
