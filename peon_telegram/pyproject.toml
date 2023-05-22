@@ -16,7 +16,7 @@ pymongo = "3.8.0"
 PyMySQL = "1.0.2"
 pytest = "^7.2.2"
 python-telegram-bot = {version = "20.0a4", allow-prereleases = true}
-requests = "2.21.0"
+requests = "2.31.0"
 wheel = "^0.38.1"
 psutil = "5.9.3"
 steamapi = {git = "https://github.com/smiley/steamapi.git"}
