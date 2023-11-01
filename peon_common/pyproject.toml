@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "peon-common"
-version = "0.1.6"
+version = "0.1.9"
 description = "Shared peon-related utilities"
 authors = ["creohex <paradise.source@gmail.com>"]
 # readme = "README.md"
@@ -19,10 +19,11 @@ python-telegram-bot = {version = "20.0a4", allow-prereleases = true}
 requests = "2.21.0"
 wheel = "0.38.1"
 psutil = "5.9.3"
-steamapi = {git = "https://github.com/smiley/steamapi.git"}
+# steamapi = {git = "https://github.com/smiley/steamapi.git"}
 pydantic = "^1.10.7"
-beanie = "^1.17.0"
 python-dotenv = "^1.0.0"
+openai = "^0.28.1"
+mongoengine = "^0.27.0"
 
 [build-system]
 requires = ["poetry-core"]
