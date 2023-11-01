@@ -27,5 +27,5 @@ if [ $? != 0 ]; then
 fi
 
 # application:
-python -u /app/start.py
+python -u ./init/start.py
 echo "App terminated (code=$?)."
