@@ -20,6 +20,5 @@ def await_db(retries=10):
         print("Failed to connect to database!")
         exit(1)
 
-
 if __name__ == "__main__":
-    await_db(retries=20)
+    await_db(retries=5)
