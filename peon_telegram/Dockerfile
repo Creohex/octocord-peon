@@ -14,9 +14,10 @@ RUN set -eux; \
 
 # application setup:
 COPY ./init ./peon_telegram/start.py init/
-COPY ./peon_common ./peon_telegram packages/
+COPY ./peon_common packages/peon_common
+COPY ./peon_telegram packages/peon_telegram
 RUN set -eux; \
-    pip install --no-cache-dir -e ./packages;
+    pip install --no-cache-dir -e ./packages/*;
 
 EXPOSE 80 443
 
