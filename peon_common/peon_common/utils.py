@@ -1,6 +1,5 @@
 """Various utils, DB operations, etc."""
 
-import binascii
 import json
 import os
 import random
@@ -12,7 +11,6 @@ import urllib.parse
 
 import nltk.chat.eliza
 import psutil
-import steamapi
 
 from peon_common.exceptions import (
     CommandExecutionError,
@@ -63,39 +61,31 @@ MORSE_CODE = {
 }
 """Morse code dictionary."""
 
-ICOSAHEDRON = [
-    "As I see it, yes.",
-    "Ask again later.",
-    "Better not tell you now.",
-    "Cannot predict now.",
-    "Concentrate and ask again.",
-    "Don’t count on it.",
-    "It is certain.",
-    "It is decidedly so.",
-    "Most likely.",
-    "My reply is no.",
-    "My sources say no.",
-    "Outlook not so good.",
-    "Outlook good.",
-    "Reply hazy, try again.",
-    "Signs point to yes.",
-    "Very doubtful.",
-    "Without a doubt.",
-    "Yes.",
-    "Yes – definitely.",
-    "You may rely on it.",
-]
+# DB-defined constants
+ICOSAHEDRON = []
 """8ball messages."""
-
+SLOT_GRATS = []
+GENERIC_GRATS = []
+ASSET_CATEGORIES = ["ICOSAHEDRON", "SLOT_GRATS", "GENERIC_GRATS"]
+# ---
 
 def get_env_vars():
     """Check if required env vars are set and return dict containing them."""
 
     missing_variables = [_ for _ in ENV_VARS if _ not in os.environ.keys()]
-    if len(missing_variables) > 0:
-        raise Exception("Error: missing required variables: %s" % missing_variables)
+    if len(missing_variables):
+        raise Exception(f"Error: missing required variables: {missing_variables}")
 
     return {key: os.environ[key] for key in ENV_VARS}
+
+
+def get_env_var(key):
+    """Retrieves a single env var."""
+
+    value = os.environ.get(key)
+    if value is None:
+        raise Exception(f"Error: env var '{key}' is not set!")
+    return value
 
 
 def get_file(name, mode="rb"):
@@ -138,66 +128,8 @@ tr_endpoints = {
         "get_text": lambda _: "".join(b[0] for b in _[0]),
     },
 }
-d = lambda _: binascii.a2b_hex(_).decode('utf8')
-steam_users = {
-    "creohex": {"userid": 76561198044030521},
-    "fringe": {"userid": 76561198060131971},
-    "gorelka": {"userurl": "PIZERok"},
-    "dronxd": {"userid": 76561198017345589},
-    "dakorher": {"userurl": "Dakorher"},
-    "ankarnamir": {"userid": 76561198011087208},
-    "dees": {"userid": 76561198011748348},
-    "sashoker": {"userurl": "Sashoker"},
-}
-steam_commands_mapping = {
-    "id": lambda user: user.id,
-    "name": lambda user: user.real_name,
-    "profile": lambda user: user.profile_url,
-    "fiend_count": lambda user: len(user.friends),
-    "friends": lambda user: ", ".join(friend.name for friend in user.friends),
-    "avatar": lambda user: user.avatar_medium,
-    "avatar_big": lambda user: user.avatar_full,
-    "last_online": lambda user: user.last_logoff,
-    "level": lambda user: user.level,
-    "currently_playing": lambda user: user.currently_playing,
-    "game_count": lambda user: len(user.games),
-    "owned_game_count": lambda user: len(user.owned_games),
-    "vac": lambda user: str(user.is_vac_banned),
-    "game_bans": lambda user: user.number_of_vac_bans,
-}
 default_chance = 15
 simple_replies_collection = {"specific_name": [50, [""]]}
-role_emergency = "<@&453948742710722569>"
-role_emergency_raw = "453948742710722569"
-emergency_phrases = [
-    'а ну-ка забил слотецки', '-> слот забил',
-    'пересмотр зовет', 'к барьеру!',
-    d(b'd0b7d0b0d0b8d0b1d0b0d0b22c20d0b3d0be21'),
-    'мерси вызывает!', 'the world could always use more heroes!',
-    'gwa-gwa-gwa!! gwa!', 'bootywatch awaits',
-    'аляяяяярм', 'поехали!', 'запрыгивай, а то станешь саней',
-    'заходи. или ты коля?',
-    'slish, sel na motor i plusanul! :pig: :dark_sunglasses: ',
-]
-rolling_alexeys = [d(b'616c6568614562616c6f'), d(b'6562616c6f416c656861')]
-slot_grats = [
-    d(b'7b307d2c20d0b020d182d18b20d0bdd0b5d0bfd0bbd0bed185'),
-    d(b'd09dd18320d0b2d181d1912c20d182d0b5d0bfd0b5d180d18c20d0b2d181d0b520d182'
-        b'd191d0bbd0bad0b820d182d0b2d0bed0b8'),
-    d(b'd09bd183d187d188d0b520d0b1d18b20d182d18b20d182d0b0d0ba20d0b7d0b020d0be'
-        b'd0b1d0b6d0b5d0bad182d0b8d0b220d0b1d0b8d0bbd181d18f'),
-    d(b'd09ad180d0b0d181d0b8d0b2d0be20d0bad180d183d182d0b8d188d18c2c207b307d21'),
-    d(b'7b307d202d20d0bfd0bed0b1d0b5d0b4d0b8d182d0b5d0bbd18c20d0bfd0be20d0b6d0'
-        b'b8d0b7d0bdd0b8'),
-    d(b'28d18f20d0bdd0b8d187d0b5d0b3d0be20d0bdd0b520d0bfd0bed0b4d0bad180d183d1'
-        b'87d0b8d0b2d0b0d0bb2c203130302520d0b8d0bdd184d0b029'),
-    d(b'd0a1d0b5d0bad182d0bed18020d0bfd180d0b8d0b720d0bdd0b020d0b1d0b0d180d0b0'
-        b'd0b1d0b0d0bdd0b521'),
-]
-generic_grats = [
-    "Congratulations!", "wow, unbelievable", "Once in a lifetime achievement!",
-    "Incredible!", "Absolutely gorgeous outcome!", "Well done!"
-]
 ascii_ascending_luminance = ".,-~:;=!*#$@"
 
 
@@ -319,11 +251,11 @@ def starify(sentence, limit=600):
 
     for i in range(len(words)):
         if i == 0:
-            words[i] = " %s.. " % words[i]
+            words[i] = f" {words[i]}.. "
         elif i == len(words) - 1:
-            words[i] = " ...%s " % words[i]
+            words[i] = f" ...{words[i]} "
         else:
-            words[i] = " ..%s.. " % words[i]
+            words[i] = f" ..{words[i]}.. "
 
     limit = limit - sum([len(w) for w in words])
     payload = words
@@ -461,39 +393,6 @@ def urban_query(token, query):
                 re.sub(mask, '', descr["example"]), descr["permalink"])
 
     return None
-
-
-def steam(query):
-    """Steam API integration."""
-
-    if not re.match(r"^\w+\s\w+", query):
-        raise CommandMalformed("expecting: '<user> <command> <_args>'")
-
-    user_name, cmd, *_ = query.split()
-
-    user_id = steam_users.get(user_name, None)
-    steamapi.core.APIConnection(api_key=os.environ.get(ENV_TOKEN_STEAMAPI),
-                                validate_key=True)
-
-    if user_id:
-        user = steamapi.user.SteamUser(**user_id)
-    else:
-        try:
-            try:
-                user_id = {"userid": int(user_name)}
-            except ValueError:
-                user_id = {"userurl": user_name}
-
-            user = steamapi.user.SteamUser(**user_id)
-        except steamapi.errors.UserNotFoundError:
-            raise CommandExecutionError(f"user '{user_name}' not found.")
-
-    cmd_handler = steam_commands_mapping.get(cmd, None)
-    if cmd_handler is None:
-        raise CommandMalformed(
-            f"Supported commands: {', '.join(steam_commands_mapping.keys())}")
-
-    return cmd_handler(user)
 
 
 def doc(text):

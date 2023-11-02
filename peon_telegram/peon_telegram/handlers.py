@@ -6,12 +6,12 @@ import re
 from datetime import datetime
 
 from peon_common import exceptions, utils
-from peon_telegram import constants
 from peon_common.exceptions import (
     CommandAccessRestricted,
     CommandExecutionError,
     CommandMalformed,
 )
+from peon_telegram import constants
 
 from telegram import (
     constants as tgconstants,
@@ -207,18 +207,6 @@ def urban(text):
 @default_handler(reply=True, require_input=True)
 def doc(text):
     return utils.doc(text)
-
-
-@default_handler(reply=True,
-                 require_input=True,
-                 examples=["user profile", "user game_count", "user gibberish"])
-def steam(text):
-    try:
-        return utils.steam(text)
-    except exceptions.CommandError as e:
-        return str(e)
-    except:
-        raise
 
 
 @default_handler(reply=True, require_input=True, examples=["bcgfycrfz byrdbpbwbz"])
