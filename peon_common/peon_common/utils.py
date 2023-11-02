@@ -1,6 +1,5 @@
 """Various utils, DB operations, etc."""
 
-import binascii
 import json
 import os
 import random
@@ -63,39 +62,31 @@ MORSE_CODE = {
 }
 """Morse code dictionary."""
 
-ICOSAHEDRON = [
-    "As I see it, yes.",
-    "Ask again later.",
-    "Better not tell you now.",
-    "Cannot predict now.",
-    "Concentrate and ask again.",
-    "Don’t count on it.",
-    "It is certain.",
-    "It is decidedly so.",
-    "Most likely.",
-    "My reply is no.",
-    "My sources say no.",
-    "Outlook not so good.",
-    "Outlook good.",
-    "Reply hazy, try again.",
-    "Signs point to yes.",
-    "Very doubtful.",
-    "Without a doubt.",
-    "Yes.",
-    "Yes – definitely.",
-    "You may rely on it.",
-]
+# DB-defined constants
+ICOSAHEDRON = []
 """8ball messages."""
-
+SLOT_GRATS = []
+GENERIC_GRATS = []
+ASSET_CATEGORIES = ["ICOSAHEDRON", "SLOT_GRATS", "GENERIC_GRATS"]
+# ---
 
 def get_env_vars():
     """Check if required env vars are set and return dict containing them."""
 
     missing_variables = [_ for _ in ENV_VARS if _ not in os.environ.keys()]
-    if len(missing_variables) > 0:
-        raise Exception("Error: missing required variables: %s" % missing_variables)
+    if len(missing_variables):
+        raise Exception(f"Error: missing required variables: {missing_variables}")
 
     return {key: os.environ[key] for key in ENV_VARS}
+
+
+def get_env_var(key):
+    """Retrieves a single env var."""
+
+    value = os.environ.get(key)
+    if value is None:
+        raise Exception(f"Error: env var '{key}' is not set!")
+    return value
 
 
 def get_file(name, mode="rb"):
@@ -167,37 +158,6 @@ steam_commands_mapping = {
 }
 default_chance = 15
 simple_replies_collection = {"specific_name": [50, [""]]}
-role_emergency = "<@&453948742710722569>"
-role_emergency_raw = "453948742710722569"
-emergency_phrases = [
-    'а ну-ка забил слотецки', '-> слот забил',
-    'пересмотр зовет', 'к барьеру!',
-    d(b'd0b7d0b0d0b8d0b1d0b0d0b22c20d0b3d0be21'),
-    'мерси вызывает!', 'the world could always use more heroes!',
-    'gwa-gwa-gwa!! gwa!', 'bootywatch awaits',
-    'аляяяяярм', 'поехали!', 'запрыгивай, а то станешь саней',
-    'заходи. или ты коля?',
-    'slish, sel na motor i plusanul! :pig: :dark_sunglasses: ',
-]
-rolling_alexeys = [d(b'616c6568614562616c6f'), d(b'6562616c6f416c656861')]
-slot_grats = [
-    d(b'7b307d2c20d0b020d182d18b20d0bdd0b5d0bfd0bbd0bed185'),
-    d(b'd09dd18320d0b2d181d1912c20d182d0b5d0bfd0b5d180d18c20d0b2d181d0b520d182'
-        b'd191d0bbd0bad0b820d182d0b2d0bed0b8'),
-    d(b'd09bd183d187d188d0b520d0b1d18b20d182d18b20d182d0b0d0ba20d0b7d0b020d0be'
-        b'd0b1d0b6d0b5d0bad182d0b8d0b220d0b1d0b8d0bbd181d18f'),
-    d(b'd09ad180d0b0d181d0b8d0b2d0be20d0bad180d183d182d0b8d188d18c2c207b307d21'),
-    d(b'7b307d202d20d0bfd0bed0b1d0b5d0b4d0b8d182d0b5d0bbd18c20d0bfd0be20d0b6d0'
-        b'b8d0b7d0bdd0b8'),
-    d(b'28d18f20d0bdd0b8d187d0b5d0b3d0be20d0bdd0b520d0bfd0bed0b4d0bad180d183d1'
-        b'87d0b8d0b2d0b0d0bb2c203130302520d0b8d0bdd184d0b029'),
-    d(b'd0a1d0b5d0bad182d0bed18020d0bfd180d0b8d0b720d0bdd0b020d0b1d0b0d180d0b0'
-        b'd0b1d0b0d0bdd0b521'),
-]
-generic_grats = [
-    "Congratulations!", "wow, unbelievable", "Once in a lifetime achievement!",
-    "Incredible!", "Absolutely gorgeous outcome!", "Well done!"
-]
 ascii_ascending_luminance = ".,-~:;=!*#$@"
 
 
@@ -319,11 +279,11 @@ def starify(sentence, limit=600):
 
     for i in range(len(words)):
         if i == 0:
-            words[i] = " %s.. " % words[i]
+            words[i] = f" {words[i]}.. "
         elif i == len(words) - 1:
-            words[i] = " ...%s " % words[i]
+            words[i] = f" ...{words[i]} "
         else:
-            words[i] = " ..%s.. " % words[i]
+            words[i] = f" ..{words[i]}.. "
 
     limit = limit - sum([len(w) for w in words])
     payload = words
