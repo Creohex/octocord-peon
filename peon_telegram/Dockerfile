@@ -8,20 +8,15 @@ RUN set -eux; \
     pip install --upgrade pip;
 
 # installing project dependencies at a deeper layer to speed up container build process:
-COPY ./dependencies ./dependencies
+COPY ./dependencies/deps_common.txt ./dependencies/deps_telegram.txt dependencies/
 RUN set -eux; \
     for file in ./dependencies/*.txt; do pip install --no-cache-dir -r "$file"; done;
 
 # application setup:
-COPY ./init init
-COPY ./peon_common packages/peon_common
+COPY ./init ./peon_telegram/start.py init/
+COPY ./peon_common ./peon_telegram packages/
 RUN set -eux; \
-    pip install --no-cache-dir packages/peon_common;
-
-COPY ./peon_telegram/start.py init
-COPY ./peon_telegram packages/peon_telegram
-RUN set -eux; \
-    pip install --no-cache-dir packages/peon_telegram;
+    pip install --no-cache-dir -e ./packages;
 
 EXPOSE 80 443
 
