@@ -60,9 +60,7 @@ def connect(specific=None) -> None:
 
     for db in [specific] if specific else DATABASES:
         if CONNECTIONS[db] is None:
-            CONNECTIONS[db] = _connect(
-                alias=db, db=db, host=mongodb_conn_uri(options=OPTIONS_DEFAULT)
-            )
+            CONNECTIONS[db] = _connect(alias=db, db=db, host=mongodb_conn_uri())
 
 
 def disconnect():
