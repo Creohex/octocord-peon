@@ -33,3 +33,8 @@ class CommandExecutionError(CommandError):
 class CommandAccessRestricted(CommandError):
     def __init__(self, message=None):
         super().__init__(message)
+
+
+class DocumentNotFound(Error):
+    def __init__(self, message=None, *args, **kwargs):
+        super().__init__(message, *args, **kwargs)
