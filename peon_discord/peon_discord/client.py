@@ -4,6 +4,7 @@ import discord
 from datetime import datetime
 
 from . import commands, CommandSet, Command, MentionHandler
+from peon_common.db import initialize_db
 from peon_common.utils import (
     get_env_vars,
     get_file,
@@ -85,8 +86,12 @@ class Peon():
         ])
         self.start_time = datetime.now()
 
+
+
     def run(self):
         """Initialize/run discord client."""
+
+        initialize_db()
 
         self._client = discord.Client(status="work-work",
                                       activity=discord.CustomActivity("work-work"),
