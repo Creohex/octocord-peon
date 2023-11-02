@@ -15,17 +15,20 @@ services:
         volumes:
             - ./tools:/tools
 
-    # peon-discord:
-    #     build:
-    #         context: ./
-    #         dockerfile: ./peon_discord/Dockerfile
-    #     # depends_on:
-    #         # - mongodb-server
-    #     env_file:
-    #         - .env
-    #         - .db.env
-    #     volumes:
-    #         - ./tools:/tools
+    peon-discord:
+        build:
+            context: ./
+            dockerfile: ./peon_discord/Dockerfile
+        depends_on:
+            - mongodb
+        networks:
+            - docker_network
+        env_file:
+            - .env
+            - .db.env
+        volumes:
+            - ./tools:/tools
+            - ./peon_common/assets:/app/assets
 
     mongodb:
         image: mongo:4.2.0
