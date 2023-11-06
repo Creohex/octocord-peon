@@ -311,18 +311,18 @@ def resource_usage(text):
     return utils.resource_usage(text)
 
 
-@inline_handler
-def gpt_inline(query):
-    result = utils.gpt_request(query, role="assistant")
-    return [
-        InlineQueryResultArticle(
-            id=str(uuid.uuid4())[-5:],
-            title="gpt",
-            input_message_content=InputTextMessageContent(f"Query: {query}\n---\n{result}"),
-            description=f"{result[:40]}...",
-            thumb_url=ICON_URL_TEXT,
-        ),
-    ]
+# @inline_handler
+# def gpt_inline(query):
+#     result = utils.gpt_request(query, role="assistant")
+#     return [
+#         InlineQueryResultArticle(
+#             id=str(uuid.uuid4())[-5:],
+#             title="gpt",
+#             input_message_content=InputTextMessageContent(f"Query: {query}\n---\n{result}"),
+#             description=f"{result[:40]}...",
+#             thumb_url=ICON_URL_TEXT,
+#         ),
+#     ]
 
 
 @direct_message_handler(reply=True)
