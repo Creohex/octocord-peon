@@ -296,7 +296,7 @@ class Command(BaseCommand):
         second positional argument.
         """
 
-        super(Command, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         if not isinstance(prefix, str):
             raise Exception(f"prefix '{prefix}' is not a string!")
@@ -331,7 +331,7 @@ class MentionHandler(BaseCommand):
         `discord.Message` object as single positional argument.
         """
 
-        super(MentionHandler, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         if not callable(handler) or handler.__code__.co_argcount != 1:
             raise Exception(
