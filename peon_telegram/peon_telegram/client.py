@@ -5,6 +5,7 @@ import logging
 
 from .handlers import HANDLERS
 from peon_common.utils import ENV_TOKEN_TELEGRAM, get_env_vars
+from telegram import Update
 from telegram.ext import ApplicationBuilder
 
 
@@ -28,4 +29,4 @@ class Peon():
         for handler in HANDLERS:
             self.APPLICATION.add_handler(handler)
 
-        self.APPLICATION.run_polling()
+        self.APPLICATION.run_polling(allowed_updates=Update.ALL_TYPES)
