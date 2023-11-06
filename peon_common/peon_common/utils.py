@@ -12,16 +12,18 @@ import urllib.parse
 import nltk.chat.eliza
 import psutil
 
-from peon_common.exceptions import (
+from .exceptions import (
     CommandExecutionError,
     CommandMalformed,
 )
+from .gpt import Completion
 
 
 ENV_TOKEN_DISCORD = "discord_token"
 ENV_TOKEN_TELEGRAM = "telegram_token"
 ENV_TOKEN_RAPIDAPI = "rapidapi_token"
 ENV_TOKEN_STEAMAPI = "steamapi_token"
+ENV_TOKEN_OPENAI = "openai_token"
 ENV_TWITCH_CLIENT_ID = "twitch_client_id"
 ENV_TWITCH_CLIENT_SECRET = "twitch_client_secret"
 ENV_TELEGRAM_ADMINS = "telegram_admins"
@@ -195,7 +197,7 @@ def translate(text, lang_from=None, lang_to=None, endpoint="translate"):
         raise Exception(f"Unsupported endpoint provided. Possible values: {endpoints}")
     tr_toolset = tr_endpoints[endpoint]
     url = tr_toolset["url_template"].format(lang_from or "auto",
-                                            lang_to or "ru",
+                                            lang_to or "en",
                                             text)
     raw = json.loads(requests.get(url).text)
 
@@ -480,3 +482,7 @@ def resource_usage(text):
             f"RAM: {mem_summary(psutil.virtual_memory())}\n"
             f"swap: {mem_summary(psutil.swap_memory())}\n"
             f"disk: {mem_summary(psutil.disk_usage('/'))}")
+
+
+def gpt_request(text, role=None):
+    return Completion().request(text, role=role)

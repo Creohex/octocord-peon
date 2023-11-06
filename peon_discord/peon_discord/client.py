@@ -40,7 +40,6 @@ class Peon():
         self.command_set = CommandSet(self)
         self.command_set.register([
             Command("peon", commands.cmd_peon),
-            Command("test", commands.cmd_test),
             Command("tr", commands.cmd_tr,
                     description="translate text (langs - en, et, ru, be, ...)",
                     examples=["{0} bla", "{0}<to_lang> bla",
@@ -48,9 +47,6 @@ class Peon():
             Command("mangle", commands.cmd_mangle,
                     description="mangle phrase meaning",
                     examples=["{0} Let's see how it turns out!"]),
-            Command("steam", commands.cmd_steam,
-                    description="get various steam user information",
-                    examples=["{0} dakorher currently_playing"]),
             Command("roll", commands.cmd_roll,
                     description="roll dice",
                     examples=["{0} d4", "{0} 2d8", "{0} 100",
@@ -81,12 +77,9 @@ class Peon():
                     description="reverse given text",
                     examples=["{0} olleH"]),
             Command("stats", commands.cmd_stats, description="print various peon stats"),
-            MentionHandler(commands.handle_simple_replies),
-            MentionHandler(commands.handle_emergency_party_mention),
+            MentionHandler(commands.cmd_gpt),
         ])
         self.start_time = datetime.now()
-
-
 
     def run(self):
         """Initialize/run discord client."""
