@@ -63,7 +63,7 @@ async def handle_emergency_party_mention(message, **kwargs):
     return False
 
 
-async def cmd_peon(message, content, **kwargs):
+async def cmd_help(message, content, **kwargs):
     """List available commands."""
 
     commands = [
@@ -74,16 +74,18 @@ async def cmd_peon(message, content, **kwargs):
     for command in commands:
         info = command.prefix_full
         if command.description:
-            info = f"{info} - {command.description}"
+            info = f"- {info} - {command.description}"
         if command.examples:
-            examples = "\n\t".join(
+            examples = "\n * ".join(
                 [example.format(command.prefix_full) for example in command.examples]
             )
-            info = f"{info}\n\t{examples}"
+            info = f"{info}\n * {examples}"
 
         descriptions.append(info)
 
-    await reply(message, "Available commands:\n{0}".format("\n".join(descriptions)))
+    await reply(
+        message, "__**Available commands**__:\n{0}".format("\n".join(descriptions))
+    )
 
 
 async def cmd_test(message, content, **kwargs):
@@ -208,7 +210,7 @@ async def cmd_stats(message, content, **kwargs):
     commands = kwargs.get("command_set").commands
 
     data["user"] = client.user.name
-    data["latency"] = client.latency
+    data["latency"] = f"{client.latency:.2f}"
     delta = datetime.now() - peon.start_time
     data["uptime"] = "{0} days, {1} hours, {2} minutes, {3} seconds".format(
         delta.days, delta.seconds // 3600, delta.seconds % 3600 // 60, delta.seconds % 60
@@ -220,7 +222,8 @@ async def cmd_stats(message, content, **kwargs):
     data["private channels"] = len(client.private_channels)
     data["voice clients"] = len(client.voice_clients)
 
-    await reply(message, "\n".join(f"{k}: {v}" for k, v in data.items()))
+    formatted = "\n".join(f"{k}: {v}" for k, v in data.items())
+    await reply(message, f"```{formatted}```")
 
 
 async def cmd_mangle(message, content, **kwargs):

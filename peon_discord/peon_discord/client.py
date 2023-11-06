@@ -39,7 +39,7 @@ class Peon():
         self.env_vars = get_env_vars()
         self.command_set = CommandSet(self)
         self.command_set.register([
-            Command("peon", commands.cmd_peon),
+            Command("help", commands.cmd_help),
             Command("tr", commands.cmd_tr,
                     description="translate text (langs - en, et, ru, be, ...)",
                     examples=["{0} bla", "{0}<to_lang> bla",
@@ -67,7 +67,7 @@ class Peon():
                     description="attempt to translate to/from morse code",
                     examples=["{0} sos"]),
             Command("8ball", commands.cmd_8ball,
-                    description="ask 8ball the wise one for guidance"),
+                    description="ask 8ball for guidance"),
             Command("punto", commands.cmd_punto,
                     description="attempt to decipher text written in incorrect layout",
                     examples=["{0} nbgbxysq fktrctq"]),
