@@ -16,14 +16,16 @@ def mention_format(user_id):
     return f"<@{user_id}>"
 
 
-async def reply(message, text):
+async def reply(message, text, mention_message=False):
     """Reply to the message with text (returns new message object)."""
 
     if text:
         if isinstance(text, str) and len(text) > 2000:
             text = f"{text[:1996]}..."
-
-        return await message.channel.send(text)
+        return await message.channel.send(
+            text,
+            reference=message if mention_message else None,
+        )
 
 
 async def handle_simple_replies(message, **kwargs):
