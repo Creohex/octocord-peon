@@ -197,7 +197,7 @@ def translate(text, lang_from=None, lang_to=None, endpoint="translate"):
         raise Exception(f"Unsupported endpoint provided. Possible values: {endpoints}")
     tr_toolset = tr_endpoints[endpoint]
     url = tr_toolset["url_template"].format(lang_from or "auto",
-                                            lang_to or "ru",
+                                            lang_to or "en",
                                             text)
     raw = json.loads(requests.get(url).text)
 
