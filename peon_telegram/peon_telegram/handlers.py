@@ -193,7 +193,7 @@ def direct_message_handler(
                     await context.bot.send_message(
                         chat_id=update.effective_chat.id,
                         text=callable(text),
-                        reply_to_message_id=update.message.id,
+                        reply_to_message_id=update.message.id if reply else None,
                     )
             except Exception as e:
                 print(f"Caught exception during handling {callable.__name__}:\n```{e}```")
