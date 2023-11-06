@@ -31,8 +31,7 @@ async def reply(message, text, mention_message=False):
 async def handle_simple_replies(message, **kwargs):
     """Scan messages for keywords and reply accordingly."""
 
-    payload = utils.normalize_text(
-        message.content, simple_mask=True, do_de_latinize=True)
+    payload = utils.normalize_text(message.content, simple_mask=True, do_de_latinize=True)
 
     for k, v in utils.simple_replies_collection.items():
         if k in payload:
@@ -67,8 +66,9 @@ async def handle_emergency_party_mention(message, **kwargs):
 async def cmd_peon(message, content, **kwargs):
     """List available commands."""
 
-    commands = [cmd for cmd in kwargs.get("command_set").commands
-                if isinstance(cmd, Command)]
+    commands = [
+        cmd for cmd in kwargs.get("command_set").commands if isinstance(cmd, Command)
+    ]
     descriptions = []
 
     for command in commands:
@@ -76,8 +76,9 @@ async def cmd_peon(message, content, **kwargs):
         if command.description:
             info = f"{info} - {command.description}"
         if command.examples:
-            examples = "\n\t".join([example.format(command.prefix_full)
-                                    for example in command.examples])
+            examples = "\n\t".join(
+                [example.format(command.prefix_full) for example in command.examples]
+            )
             info = f"{info}\n\t{examples}"
 
         descriptions.append(info)
@@ -105,9 +106,11 @@ async def cmd_tr(message, content, **kwargs):
         result = utils.translate_helper(message.content[1:])
         await reply(message, f"({result['lang']}) {result['text']}")
     except exceptions.CommandMalformed:
-        await reply(message,
-                    "Correct format: !tr <text..> | !tr<lang_to> <text..> |"
-                    " !tr<lang_from><lang_to> <text..>\n(lang = en|es|fi|ru|...)")
+        await reply(
+            message,
+            "Correct format: !tr <text..> | !tr<lang_to> <text..> |"
+            " !tr<lang_from><lang_to> <text..>\n(lang = en|es|fi|ru|...)",
+        )
 
 
 async def cmd_roll(message, content, **kwargs):
@@ -122,7 +125,7 @@ async def cmd_roll(message, content, **kwargs):
     """
 
     text = utils.normalize_text(message.content.lower(), markdown=True)
-    raw = re.split(r' ?\+ ?', re.split(r'!roll ', text)[1])
+    raw = re.split(r" ?\+ ?", re.split(r"!roll ", text)[1])
 
     try:
         if not len(raw):
@@ -158,13 +161,16 @@ async def cmd_slot(message, content, **kwargs):
     await msg.add_reaction(emoji="🎊" if success else "😫")
 
     if success:
-        await reply(message,
-                    random.choice(utils.SLOT_GRATS).format(
-                        utils.format_user(message.author))
-                    if random.choice([0,1]) else
-                    utils.translate(random.choice(utils.GENERIC_GRATS),
-                                    lang_from="en",
-                                    lang_to=random.choice(utils.langs))["text"])
+        await reply(
+            message,
+            random.choice(utils.SLOT_GRATS).format(utils.format_user(message.author))
+            if random.choice([0, 1])
+            else utils.translate(
+                random.choice(utils.GENERIC_GRATS),
+                lang_from="en",
+                lang_to=random.choice(utils.langs),
+            )["text"],
+        )
 
 
 async def cmd_wiki(message, content, **kwargs):
@@ -205,7 +211,8 @@ async def cmd_stats(message, content, **kwargs):
     data["latency"] = client.latency
     delta = datetime.now() - peon.start_time
     data["uptime"] = "{0} days, {1} hours, {2} minutes, {3} seconds".format(
-        delta.days, delta.seconds // 3600, delta.seconds % 3600 // 60, delta.seconds % 60)
+        delta.days, delta.seconds // 3600, delta.seconds % 3600 // 60, delta.seconds % 60
+    )
     data["guild count"] = len(client.guilds)
     data["guilds"] = ", ".join(guild.name for guild in client.guilds)
     data["commands"] = len(commands)
@@ -264,7 +271,22 @@ async def cmd_reverse(message, content, **kwargs):
     await reply(message, content[::-1])
 
 
-class BaseCommand():
+async def cmd_gpt(message, content, **kwargs):
+    """Make a GPT request."""
+
+    mention = mention_format(kwargs["client"].client.user.id)
+    if not message.content.lower().startswith(mention):
+        return False
+
+    await reply(
+        message,
+        utils.gpt_request(content[len(mention) :]),
+        mention_message=True,
+    )
+    return True
+
+
+class BaseCommand:
     """Abstract command class."""
 
     def __init__(self, description=None, examples=None):
@@ -310,7 +332,8 @@ class Command(BaseCommand):
             raise Exception(f"prefix '{prefix}' is not a string!")
         if not callable(func) or func.__code__.co_argcount != 2:
             raise Exception(
-                "'func' must be a function with strictly two positional args!")
+                "'func' must be a function with strictly two positional args!"
+            )
 
         self.prefix = prefix
         self.func = func
@@ -320,7 +343,10 @@ class Command(BaseCommand):
 
         if message.content.lower().startswith(self.prefix_full):
             try:
-                await self.func(message, message.content[self.content_offset:], **kwargs)
+                # TODO: make proper logging
+                print(f'DEBUG: executing "{message.content}"')
+
+                await self.func(message, message.content[self.content_offset :], **kwargs)
                 return True
             except Exception as e:
                 await message.add_reaction(emoji="😫")
@@ -340,20 +366,15 @@ class MentionHandler(BaseCommand):
         """
 
         super().__init__(**kwargs)
-
-        if not callable(handler) or handler.__code__.co_argcount != 1:
-            raise Exception(
-                "'handler' must be a function with strictly one positional arg!")
-
         self.func = handler
 
     async def execute(self, message, **kwargs):
         """Execute handler."""
 
-        return await self.func(message, **kwargs)
+        return await self.func(message, message.content, **kwargs)
 
 
-class CommandSet():
+class CommandSet:
     """Represents bot command set."""
 
     def __init__(self, discord_client):
@@ -372,8 +393,9 @@ class CommandSet():
         """Executes commands in order and terminates after first successful command."""
 
         for command in self.commands:
-            if await command.execute(message,
-                                     client=self.discord_client,
-                                     command_set=self,
+            if await command.execute(
+                message,
+                client=self.discord_client,
+                command_set=self,
             ):
                 break
