@@ -3,6 +3,7 @@
 import functools
 import os
 import re
+import uuid
 from datetime import datetime
 
 from peon_common import exceptions, utils
@@ -315,7 +316,7 @@ def gpt_inline(query):
     result = utils.gpt_request(query, role="assistant")
     return [
         InlineQueryResultArticle(
-            id="gpt_request",
+            id=str(uuid.uuid4())[-5:],
             title="gpt",
             input_message_content=InputTextMessageContent(f"Query: {query}\n---\n{result}"),
             description=f"{result[:40]}...",
@@ -324,6 +325,6 @@ def gpt_inline(query):
     ]
 
 
-@direct_message_handler
+@direct_message_handler(reply=True)
 def direct_chat(text):
     return utils.gpt_request(text, role="peon")
