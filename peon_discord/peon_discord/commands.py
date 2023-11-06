@@ -278,6 +278,7 @@ async def cmd_gpt(message, content, **kwargs):
     if not message.content.lower().startswith(mention):
         return False
 
+    print(f"DEBUG: handling GPT request: '{content}'")
     await reply(
         message,
         utils.gpt_request(content[len(mention) :]),
@@ -371,6 +372,7 @@ class MentionHandler(BaseCommand):
     async def execute(self, message, **kwargs):
         """Execute handler."""
 
+        # TODO: handle exceptions, print reasons in specific cases?
         return await self.func(message, message.content, **kwargs)
 
 
