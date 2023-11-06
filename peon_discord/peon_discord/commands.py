@@ -10,6 +10,12 @@ from datetime import datetime
 from peon_common import exceptions, utils
 
 
+def mention_format(user_id):
+    """Decorates discord user ID to mention format."""
+
+    return f"<@{user_id}>"
+
+
 async def reply(message, text):
     """Reply to the message with text (returns new message object)."""
 
