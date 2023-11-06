@@ -110,7 +110,6 @@ async def cmd_roll(message, content, **kwargs):
         !roll 100 - rolls 100-sided dice
         !roll 2d4+d5 + 2d8 - rolls two 4-sided, one 5-sided and two 8-sided dice
         !roll 59-211 - rolls random value between 59 and 211
-        !roll L9 - rolls alexeys for 9 frames
     (Single responsibility principle has been neglected here in a bad way.)
     """
 
@@ -121,19 +120,7 @@ async def cmd_roll(message, content, **kwargs):
         if not len(raw):
             raise Exception(f"Args required (cmd: {text})")
 
-        if "l" in raw[0]:
-            real_alexeys = [utils.format_emoji(e)
-                            for e
-                            in message.channel.guild.emojis
-                            if e.name in utils.rolling_alexeys]
-            text = " ".join(
-                [real_alexeys[_ % 2]
-                for _
-                in range(min(int(re.split('l', raw[0].lower())[1]), 200))])
-            await reply(message, text)
-            await message.delete()
-        else:
-            await reply(message, utils.roll(raw))
+        await reply(message, utils.roll(raw))
 
     except Exception as e:
         await message.add_reaction(emoji="😫")
@@ -243,17 +230,6 @@ async def cmd_8ball(message, content, **kwargs):
     """Fetch 8ball message."""
 
     await reply(message, f"{utils.format_user(message.author)} {utils.ask_8ball()}")
-
-
-async def cmd_steam(message, content, **kwargs):
-    """Steam API command."""
-
-    try:
-        await reply(message, utils.steam(content))
-    except exceptions.CommandError as e:
-        await reply(message, str(e))
-    except:
-        raise
 
 
 async def cmd_punto(message, content, **kwargs):
