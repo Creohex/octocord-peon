@@ -12,8 +12,6 @@ services:
         env_file:
             - .env
             - .db.env
-        volumes:
-            - ./tools:/tools
 
     peon-discord:
         build:
@@ -27,7 +25,6 @@ services:
             - .env
             - .db.env
         volumes:
-            - ./tools:/tools
             - ./peon_common/assets:/app/assets
 
     mongodb:
