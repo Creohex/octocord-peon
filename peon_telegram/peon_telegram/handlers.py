@@ -3,10 +3,15 @@
 import functools
 import os
 import re
-import uuid
+
+# import uuid
 from datetime import datetime
 
-from peon_common import exceptions, utils
+from peon_common import (
+    exceptions,
+    functions,
+    utils,
+)
 from peon_common.exceptions import (
     CommandAccessRestricted,
     CommandExecutionError,
@@ -16,7 +21,6 @@ from peon_telegram import constants
 
 from telegram import (
     constants as tgconstants,
-    InlineQueryResult,
     InlineQueryResultArticle,
     InputTextMessageContent,
     Update,
@@ -61,6 +65,7 @@ def default_handler(
     """Basic handler wrapper."""
 
     def decorator(callable):
+        # TODO: replace underscores with dashes in callable.__name__?
         command = command_override or callable.__name__
         print(f"DEBUG: registering handler: {command}")
 
@@ -216,7 +221,7 @@ def help(text):
 
 @default_handler(require_input=True, examples=["d4", "2d8 + d12", "100", "12-80"])
 def roll(text):
-    return f"{text}:\n{utils.roll(text.replace('+', ' ').split())}"
+    return f"{text}:\n{functions.roll(text.replace('+', ' ').split())}"
 
 
 @default_handler(
@@ -229,17 +234,17 @@ def translate(text):
     lang_from = None
     lang_to = None
 
-    if words and len(words[0]) == 2 and words[0] in utils.langs:
+    if words and len(words[0]) == 2 and words[0] in functions.langs:
         lang_to = words[0]
         del words[0]
-    if words and len(words[0]) == 2 and words[0] in utils.langs:
+    if words and len(words[0]) == 2 and words[0] in functions.langs:
         lang_from = lang_to
         lang_to = words[0]
         del words[0]
     if not words:
         raise exceptions.CommandMalformed()
 
-    result = utils.translate(" ".join(words), lang_from=lang_from, lang_to=lang_to)
+    result = functions.translate(" ".join(words), lang_from=lang_from, lang_to=lang_to)
 
     return f"({result['lang']}) {result['text']}"
 
@@ -248,39 +253,39 @@ def translate(text):
     require_input=True, examples=["hello", "--. .. -... -... . .-. .. ... ...."]
 )
 def morse(text):
-    return utils.morse_helper(text)
+    return functions.morse_helper(text)
 
 
 @default_handler(
     reply=True, require_input=True, examples=["unstoppable force vs immovable object"]
 )
 def mangle(text):
-    return utils.mangle(text)
+    return functions.mangle(text)
 
 
 @default_handler(
     require_input=True, examples=["Every 60 seconds in Africa a minute passes"]
 )
 def starify(text):
-    return utils.starify(text)
+    return functions.starify(text)
 
 
 @default_handler(command_override="8ball", reply=True)
 def ask_8ball(text):
-    return utils.ask_8ball()
+    return functions.ask_8ball()
 
 
 @default_handler(require_input=True, examples=["neon"])
 def wiki(text):
     try:
-        return utils.wiki_summary(text)
+        return functions.wiki_summary(text)
     except exceptions.CommandExecutionError:
         return "Article not found"
 
 
 @default_handler(require_input=True, examples=["topkek"])
 def urban(text):
-    word, descr, examples, _ = utils.urban_query(
+    word, descr, examples, _ = functions.urban_query(
         os.environ[utils.ENV_TOKEN_RAPIDAPI], text
     )
     return f"{word}:\n{descr}\n\nexamples:\n{examples}"
@@ -288,17 +293,17 @@ def urban(text):
 
 @default_handler(reply=True, require_input=True)
 def doc(text):
-    return utils.doc(text)
+    return functions.doc(text)
 
 
 @default_handler(reply=True, require_input=True, examples=["bcgfycrfz byrdbpbwbz"])
 def punto(text):
-    return utils.punto(text)
+    return functions.punto(text)
 
 
 @default_handler(reply=True, require_input=True, examples=["опачки"])
 def translitify(text):
-    return utils.translitify(text.lower())
+    return functions.translitify(text.lower())
 
 
 @default_handler(reply=True, require_input=True)
@@ -308,12 +313,29 @@ def reverse(text):
 
 @default_handler(admin=True, command_override="r")
 def resource_usage(text):
-    return utils.resource_usage(text)
+    return functions.resource_usage(text)
+
+
+# GPT-related:
+# TODO: show, set, reset
+@default_handler(command_override="")
+def gpt_role_show(text):
+    ...
+
+
+@default_handler(command_override="", require_input=True)
+def gpt_role_set():
+    ...
+
+
+@default_handler()
+def gpt_role_reset(command_override=""):
+    ...
 
 
 # @inline_handler
 # def gpt_inline(query):
-#     result = utils.gpt_request(query, role="assistant")
+#     result = functions.gpt_request(query, role="assistant")
 #     return [
 #         InlineQueryResultArticle(
 #             id=str(uuid.uuid4())[-5:],
@@ -327,4 +349,4 @@ def resource_usage(text):
 
 @direct_message_handler(reply=True)
 def direct_chat(text):
-    return utils.gpt_request(text, role="peon")
+    return functions.gpt_request(text, role="peon")

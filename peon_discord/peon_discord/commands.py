@@ -7,7 +7,22 @@ import time
 from abc import abstractmethod
 from datetime import datetime
 
-from peon_common import exceptions, utils
+from peon_common import (
+    exceptions,
+    functions,
+    utils,
+)
+
+
+GENERIC_GRATS = [
+    "Congratulations!",
+    "wow, unbelievable",
+    "Once in a lifetime achievement!",
+    "Incredible!",
+    "Absolutely gorgeous outcome!",
+    "Well done!",
+]
+""""""
 
 
 def mention_format(user_id):
@@ -31,34 +46,16 @@ async def reply(message, text, mention_message=False):
 async def handle_simple_replies(message, **kwargs):
     """Scan messages for keywords and reply accordingly."""
 
-    payload = utils.normalize_text(message.content, simple_mask=True, do_de_latinize=True)
+    payload = functions.normalize_text(
+        message.content, simple_mask=True, do_de_latinize=True
+    )
 
-    for k, v in utils.simple_replies_collection.items():
+    for k, v in functions.simple_replies_collection.items():
         if k in payload:
             chance, phrases = v
             if len(phrases) > 0 and chance >= random.randint(0, 100):
                 await reply(message, random.choice(phrases))
                 return True
-
-    return False
-
-
-async def handle_emergency_party_mention(message, **kwargs):
-    """Reply to random emergency member if role is mentioned."""
-
-    if utils.role_emergency in message.content:
-        members = []
-        for m in message.channel.guild.members:
-            for r in m.roles:
-                if r.id == utils.role_emergency_raw:
-                    members.append(m)
-
-        if len(members) > 0:
-            person = random.choice(members).mention
-            phrase = random.choice(utils.emergency_phrases)
-
-            await reply(message, f"{person} {phrase}")
-            return True
 
     return False
 
@@ -105,7 +102,7 @@ async def cmd_tr(message, content, **kwargs):
     """
 
     try:
-        result = utils.translate_helper(message.content[1:])
+        result = functions.translate_helper(message.content[1:])
         await reply(message, f"({result['lang']}) {result['text']}")
     except exceptions.CommandMalformed:
         await reply(
@@ -126,14 +123,14 @@ async def cmd_roll(message, content, **kwargs):
     (Single responsibility principle has been neglected here in a bad way.)
     """
 
-    text = utils.normalize_text(message.content.lower(), markdown=True)
+    text = functions.normalize_text(message.content.lower(), markdown=True)
     raw = re.split(r" ?\+ ?", re.split(r"!roll ", text)[1])
 
     try:
         if not len(raw):
             raise Exception(f"Args required (cmd: {text})")
 
-        await reply(message, utils.roll(raw))
+        await reply(message, functions.roll(raw))
 
     except Exception as e:
         await message.add_reaction(emoji="😫")
@@ -144,7 +141,7 @@ async def cmd_starify(message, content, **kwargs):
     """Generate string resemblint star sky with ASCII symbols and spread text evenly."""
 
     if len(content) > 0:
-        await reply(message, utils.starify(content))
+        await reply(message, functions.starify(content))
         await message.delete()
 
 
@@ -152,7 +149,7 @@ async def cmd_slot(message, content, **kwargs):
     """Slot machine simulation."""
 
     static_emojis = [e for e in message.channel.guild.emojis if not e.animated]
-    sequence, success = utils.slot_sequence(static_emojis)
+    sequence, success = functions.slot_sequence(static_emojis)
 
     msg = await reply(message, message.author)
     time.sleep(1)
@@ -165,12 +162,12 @@ async def cmd_slot(message, content, **kwargs):
     if success:
         await reply(
             message,
-            random.choice(utils.SLOT_GRATS).format(utils.format_user(message.author))
+            random.choice(GENERIC_GRATS).format(functions.format_user(message.author))
             if random.choice([0, 1])
-            else utils.translate(
-                random.choice(utils.GENERIC_GRATS),
+            else functions.translate(
+                random.choice(GENERIC_GRATS),
                 lang_from="en",
-                lang_to=random.choice(utils.langs),
+                lang_to=random.choice(functions.langs),
             )["text"],
         )
 
@@ -185,14 +182,14 @@ async def cmd_wiki(message, content, **kwargs):
 
     if len(content) > 0:
         content = "_".join(content.split(" "))
-        await reply(message, utils.wiki_summary(content))
+        await reply(message, functions.wiki_summary(content))
 
 
 async def cmd_urban(message, content, **kwargs):
     """Query urban dictionary."""
 
     if len(content) > 0:
-        defs = utils.urban_query(os.environ[utils.ENV_TOKEN_RAPIDAPI], content)
+        defs = functions.urban_query(os.environ[utils.ENV_TOKEN_RAPIDAPI], content)
         if defs is None:
             await message.add_reaction(emoji="😫")
         else:
@@ -229,25 +226,27 @@ async def cmd_stats(message, content, **kwargs):
 async def cmd_mangle(message, content, **kwargs):
     """Mangle command wrapper."""
 
-    await reply(message, utils.mangle(content))
+    await reply(message, functions.mangle(content))
 
 
 async def cmd_doc(message, content, **kwargs):
     """Eliza psychotherapist hotline."""
 
-    await reply(message, utils.doc(content))
+    await reply(message, functions.doc(content))
 
 
 async def cmd_morse(message, content, **kwargs):
     """Attempt to translate to or from morse code."""
 
-    await reply(message, utils.morse_helper(content))
+    await reply(message, functions.morse_helper(content))
 
 
 async def cmd_8ball(message, content, **kwargs):
     """Fetch 8ball message."""
 
-    await reply(message, f"{utils.format_user(message.author)} {utils.ask_8ball()}")
+    await reply(
+        message, f"{functions.format_user(message.author)} {functions.ask_8ball()}"
+    )
 
 
 async def cmd_punto(message, content, **kwargs):
@@ -256,13 +255,13 @@ async def cmd_punto(message, content, **kwargs):
     if not content:
         raise Exception("Content required")
 
-    await reply(message, utils.punto(content.lower()))
+    await reply(message, functions.punto(content.lower()))
 
 
 async def cmd_translitify(message, content, **kwargs):
     """Attempt to convert content into gibberish translit."""
 
-    await reply(message, utils.translitify(content.lower()))
+    await reply(message, functions.translitify(content.lower()))
 
 
 async def cmd_reverse(message, content, **kwargs):
@@ -284,7 +283,7 @@ async def cmd_gpt(message, content, **kwargs):
     print(f"DEBUG: handling GPT request: '{content}'")
     await reply(
         message,
-        utils.gpt_request(content[len(mention) :]),
+        functions.gpt_request(content[len(mention) :]),
         mention_message=True,
     )
     return True
