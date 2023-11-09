@@ -144,3 +144,16 @@ class Assets(BaseDocument):
     def load_assets(cls, categories):
         for c in categories:
             setattr(utils, c, cls.get_category(c).value)
+
+
+class GPTRoleSetting(BaseDocument):
+    owner_id=StringField()
+    role_description=StringField()
+
+    @classmethod
+    def get(cls, owner_id) -> GPTRoleSetting:
+        return cls.find_one(owner_id=owner_id)
+
+    @classmethod
+    def set(cls, owner_id, role_description) -> bool:
+        cls(owner_id=owner_id, role_description=role_description).save()
