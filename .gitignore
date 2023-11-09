@@ -1,6 +1,7 @@
 *.env
 db/data
 tools/exports
+/dependencies/*.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
