@@ -325,21 +325,22 @@ def resource_usage(text, **kwargs):
 
 
 # GPT-related:
-# TODO: show, set, reset
-@default_handler(command_override="")
-def gpt_role_show(text):
-    ...
+@default_handler(command_override="show_ai_role", reply=True)
+def gpt_role_show(text, **kwargs):
+    return Completion().get_role(kwargs["message_author"]) or "default role"
 
 
-@default_handler(command_override="", require_input=True)
-def gpt_role_set():
-    ...
+@default_handler(command_override="update_ai_role", require_input=True, reply=True)
+def gpt_role_set(text, **kwargs):
+    Completion().set_role(kwargs["message_author"], text)
+    return "role has been updated"
 
 
-@default_handler()
-def gpt_role_reset(command_override=""):
-    ...
-
+@default_handler(command_override="reset_ai_role", reply=True)
+def gpt_role_reset(text, **kwargs):
+    Completion().reset_role(kwargs["message_author"])
+    return "role has been reset"
+# ---
 
 # @inline_handler
 # def gpt_inline(query):
