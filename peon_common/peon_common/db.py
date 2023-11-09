@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from typing import Self
+
 from mongoengine import (
     connect as _connect,
     disconnect,
     Document,
+    DoesNotExist,
     DynamicField,
     IntField,
     StringField,
@@ -15,7 +18,6 @@ from mongoengine import (
 from . import utils
 from .exceptions import DocumentNotFound
 from .utils import (
-    ASSET_CATEGORIES,
     ENV_DB_HOST,
     ENV_DB_PASS,
     ENV_DB_PORT,
@@ -93,15 +95,24 @@ def check_connection():
 
 def initialize_db():
     connect(specific=DB_PEON)
-    Assets.load_assets(ASSET_CATEGORIES)
 
 
 class BaseDocument(Document):
-    meta = {"abstract": True}
+    meta = {
+        "abstract": True,
+        "db_alias": DB_PEON,
+    }
 
     @classmethod
-    def all(cls: Document) -> list[Document]:
+    def find_all(cls: Document) -> list[Self]:
         return cls.objects.all()
+
+    @classmethod
+    def find_one(cls: Document, **kwargs) -> Self:
+        try:
+            return cls.objects.get(**kwargs)
+        except DoesNotExist:
+            return None
 
     @classmethod
     def delete_all(cls):
@@ -119,12 +130,11 @@ class TestEntity(BaseDocument):
 
 
 class Assets(BaseDocument):
-    meta = {"db_alias": DB_PEON}
     category = StringField()
     value = DynamicField()
 
     @classmethod
-    def get_category(cls, category):
+    def get_category(cls, category) -> Assets:
         document = cls.objects(category=category).get()
         if not document:
             raise DocumentNotFound(f"Asset '{category}' not found!")
