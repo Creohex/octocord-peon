@@ -17,6 +17,7 @@ from peon_common.exceptions import (
     CommandExecutionError,
     CommandMalformed,
 )
+from peon_common.gpt import Completion
 from peon_telegram import constants
 
 from telegram import (
@@ -55,6 +56,13 @@ def admins():
     ]
 
 
+def gather_context(update) -> dict:
+    # import pdb; pdb.set_trace()
+    return {
+        "message_author": str(update.message.from_user.id),
+    }
+
+
 def default_handler(
     command_override: str = None,
     require_input: bool = False,
@@ -89,7 +97,7 @@ def default_handler(
 
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id,
-                    text=callable(text),
+                    text=callable(text, **gather_context(update)),
                     reply_to_message_id=update.message.id if reply else None,
                 )
             except CommandMalformed as cm:
@@ -197,7 +205,7 @@ def direct_message_handler(
                     )
                     await context.bot.send_message(
                         chat_id=update.effective_chat.id,
-                        text=callable(text),
+                        text=callable(text, **gather_context(update)),
                         reply_to_message_id=update.message.id if reply else None,
                     )
             except Exception as e:
@@ -210,17 +218,17 @@ def direct_message_handler(
 
 
 @default_handler(reply=True, admin=True)
-def test(text):
+def test(text, **kwargs):
     return "..."
 
 
 @default_handler()
-def help(text):
+def help(text, **kwargs):
     return "help?!"
 
 
 @default_handler(require_input=True, examples=["d4", "2d8 + d12", "100", "12-80"])
-def roll(text):
+def roll(text, **kwargs):
     return f"{text}:\n{functions.roll(text.replace('+', ' ').split())}"
 
 
@@ -229,7 +237,7 @@ def roll(text):
     require_input=True,
     examples=["<text..>", "<lang_to> <text..>", "<lang_from> <lang_to> <text..>"],
 )
-def translate(text):
+def translate(text, **kwargs):
     words = text.split()
     lang_from = None
     lang_to = None
@@ -252,31 +260,31 @@ def translate(text):
 @default_handler(
     require_input=True, examples=["hello", "--. .. -... -... . .-. .. ... ...."]
 )
-def morse(text):
+def morse(text, **kwargs):
     return functions.morse_helper(text)
 
 
 @default_handler(
     reply=True, require_input=True, examples=["unstoppable force vs immovable object"]
 )
-def mangle(text):
+def mangle(text, **kwargs):
     return functions.mangle(text)
 
 
 @default_handler(
     require_input=True, examples=["Every 60 seconds in Africa a minute passes"]
 )
-def starify(text):
+def starify(text, **kwargs):
     return functions.starify(text)
 
 
 @default_handler(command_override="8ball", reply=True)
-def ask_8ball(text):
+def ask_8ball(text, **kwargs):
     return functions.ask_8ball()
 
 
 @default_handler(require_input=True, examples=["neon"])
-def wiki(text):
+def wiki(text, **kwargs):
     try:
         return functions.wiki_summary(text)
     except exceptions.CommandExecutionError:
@@ -284,7 +292,7 @@ def wiki(text):
 
 
 @default_handler(require_input=True, examples=["topkek"])
-def urban(text):
+def urban(text, **kwargs):
     word, descr, examples, _ = functions.urban_query(
         os.environ[utils.ENV_TOKEN_RAPIDAPI], text
     )
@@ -292,27 +300,27 @@ def urban(text):
 
 
 @default_handler(reply=True, require_input=True)
-def doc(text):
+def doc(text, **kwargs):
     return functions.doc(text)
 
 
 @default_handler(reply=True, require_input=True, examples=["bcgfycrfz byrdbpbwbz"])
-def punto(text):
+def punto(text, **kwargs):
     return functions.punto(text)
 
 
 @default_handler(reply=True, require_input=True, examples=["опачки"])
-def translitify(text):
+def translitify(text, **kwargs):
     return functions.translitify(text.lower())
 
 
 @default_handler(reply=True, require_input=True)
-def reverse(text):
+def reverse(text, **kwargs):
     return text[::-1]
 
 
 @default_handler(admin=True, command_override="r")
-def resource_usage(text):
+def resource_usage(text, **kwargs):
     return functions.resource_usage(text)
 
 
@@ -348,5 +356,5 @@ def gpt_role_reset(command_override=""):
 
 
 @direct_message_handler(reply=True)
-def direct_chat(text):
-    return functions.gpt_request(text, role="peon")
+def direct_chat(text, **kwargs):
+    return Completion().request(text, kwargs["message_author"])
