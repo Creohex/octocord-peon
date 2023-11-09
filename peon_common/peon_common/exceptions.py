@@ -15,6 +15,11 @@ class Error(Exception):
         #     self.message = message
 
 
+class LogicalError(Error):
+    def __init__(self, message=None, *args, **kwargs):
+        super().__init__(message, *args, **kwargs)
+
+
 class CommandError(Error):
     def __init__(self, message=None):
         super().__init__(message)
@@ -36,5 +41,10 @@ class CommandAccessRestricted(CommandError):
 
 
 class DocumentNotFound(Error):
+    def __init__(self, message=None, *args, **kwargs):
+        super().__init__(message, *args, **kwargs)
+
+
+class DocumentValidationError(Error):
     def __init__(self, message=None, *args, **kwargs):
         super().__init__(message, *args, **kwargs)
