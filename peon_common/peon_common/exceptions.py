@@ -20,6 +20,11 @@ class LogicalError(Error):
         super().__init__(message, *args, **kwargs)
 
 
+class ValidationError(Error):
+    def __init__(self, message=None, *args, **kwargs):
+        super().__init__(message, *args, **kwargs)
+
+
 class CommandError(Error):
     def __init__(self, message=None):
         super().__init__(message)
