@@ -443,7 +443,3 @@ def resource_usage(text):
             f"RAM: {mem_summary(psutil.virtual_memory())}\n"
             f"swap: {mem_summary(psutil.swap_memory())}\n"
             f"disk: {mem_summary(psutil.disk_usage('/'))}")
-
-
-def gpt_request(text, owner_id=None, role=None, role_description=None):
-    return Completion().request(text, role=role, role_description=role_description)
