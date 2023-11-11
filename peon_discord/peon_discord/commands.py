@@ -12,6 +12,7 @@ from peon_common import (
     functions,
     utils,
 )
+from peon_common.gpt import Completion
 
 
 GENERIC_GRATS = [
@@ -283,7 +284,7 @@ async def cmd_gpt(message, content, **kwargs):
     print(f"DEBUG: handling GPT request: '{content}'")
     await reply(
         message,
-        functions.gpt_request(content[len(mention) :]),
+        Completion().request(content[len(mention) :]),
         mention_message=True,
     )
     return True
