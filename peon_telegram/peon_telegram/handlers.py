@@ -340,6 +340,8 @@ def gpt_role_set(text, **kwargs):
 def gpt_role_reset(text, **kwargs):
     Completion().reset_role(kwargs["message_author"])
     return "role has been reset"
+
+
 # ---
 
 # @inline_handler
@@ -358,4 +360,6 @@ def gpt_role_reset(text, **kwargs):
 
 @direct_message_handler(reply=True)
 def direct_chat(text, **kwargs):
-    return Completion().request(text, kwargs["message_author"])
+    return Completion().request(
+        text, owner_id=kwargs["message_author"], use_history=True, history_limit=3
+    )
