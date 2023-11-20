@@ -4,14 +4,19 @@ from __future__ import annotations
 
 from copy import deepcopy
 from typing import Self
+from datetime import datetime
 
 from mongoengine import (
     connect as _connect,
+    DateTimeField,
     disconnect,
     Document,
+    IntField,
     DoesNotExist,
     DynamicField,
-    IntField,
+    EmbeddedDocument,
+    EmbeddedDocumentField,
+    ListField,
     StringField,
 )
 
@@ -38,6 +43,9 @@ OPTIONS_DEFAULT = {
     "authMechanism": "DEFAULT",
 }
 """Default database connection options."""
+
+MAX_SAVED_GPT_INTERACTIONS = 3
+"""Maximum amount of saved dialogues between user and GPT model."""
 
 
 def conn_string() -> str:
@@ -98,6 +106,8 @@ def initialize_db():
 
 
 class BaseDocument(Document):
+    """Abastract base document, defining common functionality."""
+
     meta = {
         "abstract": True,
         "db_alias": DB_PEON,
@@ -130,30 +140,112 @@ class TestEntity(BaseDocument):
 
 
 class Assets(BaseDocument):
-    category = StringField()
-    value = DynamicField()
+    """Document for miscellaneous key-value pairs that have to stored in DB."""
+
+    category = StringField(primary_key=True, unique=True, required=True)
+    value = DynamicField(required=True)
 
     @classmethod
-    def get_category(cls, category) -> Assets:
+    def get_category(cls, category: str) -> Self:
         document = cls.objects(category=category).get()
         if not document:
             raise DocumentNotFound(f"Asset '{category}' not found!")
         return document
 
     @classmethod
-    def load_assets(cls, categories):
+    def load_assets(cls, categories: list) -> None:
         for c in categories:
             setattr(utils, c, cls.get_category(c).value)
 
 
 class GPTRoleSetting(BaseDocument):
-    owner_id=StringField()
-    role_description=StringField()
+    """Represents GPT personalization for specific owner(user)."""
+
+    owner_id = StringField(unique=True, required=True)
+    role_description = StringField(required=True)
 
     @classmethod
-    def get(cls, owner_id) -> GPTRoleSetting:
+    def get(cls, owner_id: str) -> Self:
         return cls.find_one(owner_id=owner_id)
 
     @classmethod
-    def set(cls, owner_id, role_description) -> bool:
+    def set(cls, owner_id: str, role_description: str) -> bool:
         cls(owner_id=owner_id, role_description=role_description).save()
+
+
+class GPTChatInteraction(EmbeddedDocument):
+    """Represents a single interaction between a user and GPT model."""
+
+    user_message = StringField(required=True)
+    system_reply = StringField(required=True)
+    timestamp = DateTimeField(required=True, default=lambda: datetime.now())
+
+
+class GPTChatHistory(BaseDocument):
+    """
+    Represents histories of interactions between different users and GPT model.
+
+    Structure:
+    {
+        "owner_id": str,
+        "interactions": [
+            {
+                "user_message": str,
+                "system_reply": str,
+                "timestamp": int,
+            },
+            <...>,
+        ],
+        <...>,
+    }
+    """
+
+    owner_id = StringField(unique=True, required=True)
+    interactions = ListField(
+        EmbeddedDocumentField(GPTChatInteraction), max_length=MAX_SAVED_GPT_INTERACTIONS
+    )
+
+    @classmethod
+    def store(cls, owner_id: str, user: str, system: str, timestamp: int = None) -> None:
+        """Stores an interaction for specific owner ID."""
+
+        document = cls.find_one(owner_id=owner_id)
+        interaction = GPTChatInteraction(
+            user_message=user,
+            system_reply=system,
+            timestamp=timestamp,
+        )
+        if document:
+            if len(document.interactions) >= MAX_SAVED_GPT_INTERACTIONS:
+                document.interactions.pop(0)
+            document.interactions.append(interaction)
+            document.save()
+        else:
+            cls(owner_id=owner_id, interactions=[interaction]).save()
+
+    @classmethod
+    def fetch(cls, owner_id: str) -> list:
+        """
+        Fetches sequence of interactions in format (as expected by OpenAI Completion):
+        [
+            {"role": "user", "content": <...>},
+            {"role": "assistant", "content": <...>},
+            {"role": "user", "content": <...>},
+            {"role": "assistant", "content": <...>},
+            <...>
+        ]
+        """
+
+        document = cls.find_one(owner_id=owner_id)
+        if document:
+            # data = document.interactions.sort(key=lambda r: r.timestamp)
+            # FIXME: make sure interactions are in the correct order
+            #        (or sort them otherwise)
+            data = document.interactions
+            formatted = []
+            for d in data:
+                formatted.append({"role": "user", "content": d.user_message})
+                formatted.append({"role": "assistant", "content": d.system_reply})
+            return formatted
+        else:
+            return []
