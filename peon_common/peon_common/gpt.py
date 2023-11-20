@@ -2,7 +2,7 @@ import os
 
 import openai
 
-from peon_common.db import GPTRoleSetting
+from peon_common.db import GPTChatHistory, GPTRoleSetting
 from peon_common.exceptions import LogicalError, DocumentValidationError
 from peon_common.models import Singleton
 
@@ -83,7 +83,13 @@ class Completion(Singleton):
             setting.delete()
 
     # TODO: support supplying GPT with previous messages for context
-    def request(self, prompt: str, owner_id: str = None) -> str:
+    def request(
+        self,
+        prompt: str,
+        owner_id: str = None,
+        use_history=False,
+        history_limit=2,
+    ) -> str:
         """Make request to selected GPT model."""
 
         if owner_id:
@@ -91,13 +97,15 @@ class Completion(Singleton):
         else:
             role_description = ROLE_DEFAULT
 
-        return openai.ChatCompletion.create(
-            model=self.model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": role_description or ROLE_DEFAULT,
-                },
-                {"role": "user", "content": prompt},
-            ],
-        )["choices"][0]["message"]["content"]
+        messages = [{"role": "system", "content": role_description or ROLE_DEFAULT}]
+        if owner_id and use_history:
+            messages.extend(GPTChatHistory.fetch(owner_id)[-history_limit * 2 :])
+        messages.append({"role": "user", "content": prompt})
+
+        reply = openai.ChatCompletion.create(model=self.model, messages=messages)
+        assistant_msg = reply["choices"][0]["message"]["content"]
+
+        if owner_id:
+            GPTChatHistory.store(owner_id, prompt, assistant_msg)
+
+        return assistant_msg
