@@ -277,14 +277,20 @@ async def cmd_reverse(message, content, **kwargs):
 async def cmd_gpt(message, content, **kwargs):
     """Make a GPT request."""
 
-    mention = mention_format(kwargs["client"].client.user.id)
+    user_id = str(kwargs["client"].client.user.id)
+    mention = mention_format(user_id)
     if not message.content.lower().startswith(mention):
         return False
 
     print(f"DEBUG: handling GPT request: '{content}'")
     await reply(
         message,
-        Completion().request(content[len(mention) :]),
+        Completion().request(
+            content[len(mention) :],
+            owner_id=user_id,
+            use_history=True,
+            history_limit=3,
+        ),
         mention_message=True,
     )
     return True
