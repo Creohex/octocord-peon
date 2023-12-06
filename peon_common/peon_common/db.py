@@ -170,6 +170,7 @@ class GPTRoleSetting(BaseDocument):
 
     @classmethod
     def set(cls, owner_id: str, role_description: str) -> bool:
+        cls(owner_id=owner_id).find_one().delete()
         cls(owner_id=owner_id, role_description=role_description).save()
 
 
