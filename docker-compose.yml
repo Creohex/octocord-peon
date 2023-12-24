@@ -36,8 +36,6 @@ services:
             - .db.env
         volumes:
             - ./db/data:/data/db
-        ports:
-            - '27017:27017'
 
 networks:
   docker_network:
