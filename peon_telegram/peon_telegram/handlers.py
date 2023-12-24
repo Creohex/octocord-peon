@@ -99,6 +99,7 @@ def default_handler(
                     chat_id=update.effective_chat.id,
                     text=callable(text, **gather_context(update)),
                     reply_to_message_id=update.message.id if reply else None,
+                    parse_mode=tgconstants.ParseMode.MARKDOWN,
                 )
             except CommandMalformed as cm:
                 if examples:
@@ -111,7 +112,6 @@ def default_handler(
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id,
                     text=err_msg,
-                    parse_mode=tgconstants.ParseMode.MARKDOWN_V2,
                     reply_to_message_id=update.message.id,
                 )
                 print(type(cm))
@@ -135,7 +135,7 @@ def default_handler(
                     text=(
                         f"Caught error:\n```{e}```" if constants.DEBUG else "¯\\\\\_😫\_/¯"
                     ),
-                    parse_mode=tgconstants.ParseMode.MARKDOWN_V2,
+                    parse_mode=tgconstants.ParseMode.MARKDOWN,
                     reply_to_message_id=update.message.id,
                 )
                 raise e
@@ -203,10 +203,12 @@ def direct_message_handler(
                         f"DEBUG: ({datetime.now().strftime('%Y %b, %d %l:%M%p')}) "
                         f"({update.effective_user.name}) handling direct message: '{text}'"
                     )
+                    # FIXME: Properly escape certain characters for ParseMode.MARKDOWN_V2
                     await context.bot.send_message(
                         chat_id=update.effective_chat.id,
                         text=callable(text, **gather_context(update)),
                         reply_to_message_id=update.message.id if reply else None,
+                        parse_mode=tgconstants.ParseMode.MARKDOWN,
                     )
             except Exception as e:
                 print(f"Caught exception during handling {callable.__name__}:\n```{e}```")
