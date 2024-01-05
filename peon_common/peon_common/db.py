@@ -225,7 +225,7 @@ class GPTChatHistory(BaseDocument):
             cls(owner_id=owner_id, interactions=[interaction]).save()
 
     @classmethod
-    def fetch(cls, owner_id: str) -> list:
+    def fetch(cls, owner_id: str, after_ts: int = None) -> list:
         """
         Fetches sequence of interactions in format (as expected by OpenAI Completion):
         [
@@ -235,18 +235,23 @@ class GPTChatHistory(BaseDocument):
             {"role": "assistant", "content": <...>},
             <...>
         ]
+
+        - owner_id (str): User ID the conversation belongs to
+        - after_ts (int, optional (None)): fetch messages after certain timestamp
+
         """
 
         document = cls.find_one(owner_id=owner_id)
         if document:
-            # data = document.interactions.sort(key=lambda r: r.timestamp)
             # FIXME: make sure interactions are in the correct order
-            #        (or sort them otherwise)
-            data = document.interactions
+            messages = document.interactions
             formatted = []
-            for d in data:
-                formatted.append({"role": "user", "content": d.user_message})
-                formatted.append({"role": "assistant", "content": d.system_reply})
+            for message in messages:
+                if not after_ts or after_ts <= message.timestamp:
+                    formatted.append({"role": "user", "content": message.user_message})
+                    formatted.append(
+                        {"role": "assistant", "content": message.system_reply}
+                    )
             return formatted
         else:
             return []
