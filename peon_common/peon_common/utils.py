@@ -1,6 +1,8 @@
 """Various utils."""
 
+import logging
 import os
+import sys
 
 
 ENV_TOKEN_DISCORD = "discord_token"
@@ -34,6 +36,8 @@ ENV_VARS = [
 ASSETS_FOLDER = "/app/assets"
 """Assets folder location (docker container)."""
 
+APP_NAME = "octocord"
+
 
 def get_env_vars():
     """Check if required env vars are set and return dict containing them."""
@@ -58,3 +62,16 @@ def get_file(name, mode="rb"):
     """Returns existing file as bytes."""
 
     return open(f"{ASSETS_FOLDER}/{name}", mode).read()
+
+
+def logger(level: str = None) -> logging.Logger:
+    logger = logging.getLogger(APP_NAME)
+    logger.setLevel(level or logging.INFO)
+
+    formatter = logging.Formatter("[%(asctime)s] %(levelname)s: %(message)s")
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+
+    logger.addHandler(handler)
+
+    return logging.getLogger(APP_NAME)
