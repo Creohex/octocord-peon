@@ -1,9 +1,10 @@
 import os
+from datetime import datetime, timedelta
 
 import openai
 
 from peon_common.db import GPTChatHistory, GPTRoleSetting
-from peon_common.exceptions import LogicalError, DocumentValidationError
+from peon_common.exceptions import DocumentValidationError, ValidationError
 from peon_common.models import Singleton
 
 
@@ -39,8 +40,14 @@ ROLES = {
 ROLE_DESCRIPTION_MAX_LENGTH = 600
 """Maximum string length for custom role descriptions."""
 
+MESSAGE_ROLE_TYPES = ["system", "user", "assistant", "tool"]
+"""Existing completion role types."""
 
-# TODO: show billing/usage
+EXPIRATION_DELTA = timedelta(days=1)
+"""Default delta to consider GPT interaction as expired."""
+
+
+# TODO: fetch/show billing/usage
 class Completion(Singleton):
     """GPT interation model."""
 
@@ -49,6 +56,15 @@ class Completion(Singleton):
         self.model = MODEL_DEFAULT
         self.max_tokens = MAX_TOKENS
         self.temperature = TEMPERATURE_DEFAULT
+
+    @classmethod
+    def message(cls, role: str, content: str) -> dict:
+        """Constructs Completion message object."""
+
+        if role not in MESSAGE_ROLE_TYPES:
+            raise ValidationError(f"Invalid message type: {role}")
+
+        return {"role": role, "content": content}
 
     def list_models(self):
         """Return list of supported GPT models."""
@@ -82,7 +98,6 @@ class Completion(Singleton):
         if setting:
             setting.delete()
 
-    # TODO: support supplying GPT with previous messages for context
     def request(
         self,
         prompt: str,
@@ -92,20 +107,26 @@ class Completion(Singleton):
     ) -> str:
         """Make request to selected GPT model."""
 
-        if owner_id:
-            role_description = self.get_role(owner_id) or ROLE_DEFAULT
-        else:
-            role_description = ROLE_DEFAULT
+        if not owner_id:
+            return openai.ChatCompletion.create(
+                model=self.model,
+                messages=[
+                    self.message("system", ROLE_DEFAULT),
+                    self.message("user", prompt),
+                ],
+            )["choices"][0]["message"]["content"]
 
-        messages = [{"role": "system", "content": role_description or ROLE_DEFAULT}]
-        if owner_id and use_history:
-            messages.extend(GPTChatHistory.fetch(owner_id)[-history_limit * 2 :])
-        messages.append({"role": "user", "content": prompt})
+        role_description = self.get_role(owner_id) or ROLE_DEFAULT
+        messages = [self.message("system", role_description)]
+        if use_history:
+            previous_messages = GPTChatHistory.fetch(
+                owner_id, after_ts=datetime.now() - EXPIRATION_DELTA
+            )
+            messages.extend(previous_messages[-history_limit * 2 :])
+        messages.append(self.message("user", prompt))
 
         reply = openai.ChatCompletion.create(model=self.model, messages=messages)
         assistant_msg = reply["choices"][0]["message"]["content"]
-
-        if owner_id:
-            GPTChatHistory.store(owner_id, prompt, assistant_msg)
+        GPTChatHistory.store(owner_id, prompt, assistant_msg)
 
         return assistant_msg
