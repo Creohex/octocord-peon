@@ -9,9 +9,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder
 
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
-
+logging.getLogger("httpx").setLevel(logging.WARNING)  # disable requests spam
 
 class Peon():
     """Telegram Peon client."""
