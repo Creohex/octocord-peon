@@ -1,11 +1,9 @@
 """Peon handlers."""
 
 import functools
+import logging
 import os
 import re
-
-# import uuid
-from datetime import datetime
 
 from peon_common import (
     exceptions,
@@ -18,6 +16,7 @@ from peon_common.exceptions import (
     CommandMalformed,
 )
 from peon_common.gpt import Completion
+from peon_common.utils import logger
 from peon_telegram import constants
 
 from telegram import (
@@ -34,6 +33,8 @@ from telegram.ext import (
     filters,
 )
 
+
+LOG = logger(logging.DEBUG)
 
 HANDLERS = []
 """Handlers to be registered in telegram client."""
@@ -57,7 +58,6 @@ def admins():
 
 
 def gather_context(update) -> dict:
-    # import pdb; pdb.set_trace()
     return {
         "message_author": str(update.message.from_user.id),
     }
@@ -75,7 +75,7 @@ def default_handler(
     def decorator(callable):
         # TODO: replace underscores with dashes in callable.__name__?
         command = command_override or callable.__name__
-        print(f"DEBUG: registering handler: {command}")
+        LOG.debug(f"registering handler: {command}")
 
         @functools.wraps(callable)
         async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -85,10 +85,8 @@ def default_handler(
                     return
 
                 text = update.message.text[len(command) + 1 :].strip()
-                print(
-                    f"DEBUG: ({datetime.now().strftime('%Y %b, %d %l:%M%p')}) "
-                    f"({update.effective_user.name}) '{command}' -> '{text}'"
-                )
+                logging.info(f"({update.effective_user.name}) '{command}' -> '{text}'")
+                LOG.info(f"({update.effective_user.name}) '{command}' -> '{text}'")
 
                 if admin and update.effective_user.name not in admins():
                     raise CommandAccessRestricted()
@@ -114,21 +112,21 @@ def default_handler(
                     text=err_msg,
                     reply_to_message_id=update.message.id,
                 )
-                print(type(cm))
+                LOG.warning(str(cm))
             except CommandAccessRestricted as car:
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id,
                     text="Admin privileges required.",
                     reply_to_message_id=update.message.id,
                 )
-                print(type(car))
+                LOG.warning(str(car))
             except CommandExecutionError as cee:
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id,
                     text="Command unsuccessful.",
                     reply_to_message_id=update.message.id,
                 )
-                print(type(cee))
+                LOG.warning(str(cee))
             except Exception as e:
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id,
@@ -138,7 +136,7 @@ def default_handler(
                     parse_mode=tgconstants.ParseMode.MARKDOWN,
                     reply_to_message_id=update.message.id,
                 )
-                raise e
+                LOG.error(str(e))
 
         HANDLERS.append(CommandHandler(command, wrapper))
 
@@ -148,7 +146,7 @@ def default_handler(
 def inline_handler(callable):
     """Inline handler wrapper."""
 
-    print(f"DEBUG: registering inline handler: '{callable.__name__}'")
+    LOG.info(f"Registering inline handler '{callable.__name__}'")
 
     @functools.wraps(callable)
     async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -173,15 +171,13 @@ def inline_handler(callable):
                     ],
                 )
             else:
-                print(
-                    f"DEBUG: ({datetime.now().strftime('%Y %b, %d %l:%M%p')}) "
-                    f"({update.effective_user.name}) handling inline message: '{query}'"
-                )
+                username = update.effective_user.name
+                LOG.debug(f"({username}) handling inline message: '{query}'")
                 await context.bot.answer_inline_query(
                     update.inline_query.id, callable(update.inline_query.query[:-1])
                 )
         except Exception as e:
-            print(f"Caught exception during handling {callable.__name__}:\n```{e}```")
+            LOG.error(f"Caught exception during handling {callable.__name__}:\n{str(e)}")
             return
 
     HANDLERS.append(InlineQueryHandler(wrapper))
@@ -192,17 +188,15 @@ def direct_message_handler(
     reply: bool = False,
 ):
     def decorator(callable):
-        print(f"DEBUG: registering direct message handler: '{callable.__name__}'")
+        LOG.debug(f"Registering direct message handler: '{callable.__name__}'")
 
         @functools.wraps(callable)
         async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
             try:
                 text = update.message.text.strip()
                 if not text.startswith("/"):
-                    print(
-                        f"DEBUG: ({datetime.now().strftime('%Y %b, %d %l:%M%p')}) "
-                        f"({update.effective_user.name}) handling direct message: '{text}'"
-                    )
+                    username = update.effective_user.name
+                    LOG.debug(f"({username}) handling direct message: '{text}'")
                     # FIXME: Properly escape certain characters for ParseMode.MARKDOWN_V2
                     await context.bot.send_message(
                         chat_id=update.effective_chat.id,
@@ -211,7 +205,9 @@ def direct_message_handler(
                         parse_mode=tgconstants.ParseMode.MARKDOWN,
                     )
             except Exception as e:
-                print(f"Caught exception during handling {callable.__name__}:\n```{e}```")
+                LOG.error(
+                    f"Caught exception during handling {callable.__name__}:\n{str(e)}"
+                )
                 return
 
         HANDLERS.append(MessageHandler(filters.TEXT, wrapper))
