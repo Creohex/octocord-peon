@@ -44,7 +44,7 @@ OPTIONS_DEFAULT = {
 }
 """Default database connection options."""
 
-MAX_SAVED_GPT_INTERACTIONS = 3
+MAX_SAVED_GPT_INTERACTIONS = 100
 """Maximum amount of saved dialogues between user and GPT model."""
 
 
