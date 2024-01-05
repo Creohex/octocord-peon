@@ -136,7 +136,7 @@ def default_handler(
                     parse_mode=tgconstants.ParseMode.MARKDOWN,
                     reply_to_message_id=update.message.id,
                 )
-                LOG.error(str(e))
+                raise e
 
         HANDLERS.append(CommandHandler(command, wrapper))
 
@@ -177,8 +177,7 @@ def inline_handler(callable):
                     update.inline_query.id, callable(update.inline_query.query[:-1])
                 )
         except Exception as e:
-            LOG.error(f"Caught exception during handling {callable.__name__}:\n{str(e)}")
-            return
+            raise e
 
     HANDLERS.append(InlineQueryHandler(wrapper))
 
@@ -205,10 +204,7 @@ def direct_message_handler(
                         parse_mode=tgconstants.ParseMode.MARKDOWN,
                     )
             except Exception as e:
-                LOG.error(
-                    f"Caught exception during handling {callable.__name__}:\n{str(e)}"
-                )
-                return
+                raise e
 
         HANDLERS.append(MessageHandler(filters.TEXT, wrapper))
 
