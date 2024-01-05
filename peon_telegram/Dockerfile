@@ -12,6 +12,13 @@ COPY ./dependencies/deps_common.txt ./dependencies/deps_telegram.txt dependencie
 RUN set -eux; \
     for file in ./dependencies/*.txt; do pip install --no-cache-dir -r "$file"; done;
 
+# timezone configuration
+ARG timezone
+RUN if [ -n "$timezone" ]; then \
+        ln -sf /usr/share/zoneinfo/$timezone /etc/timezone && \
+        ln -sf /usr/share/zoneinfo/$timezone /etc/localtime; \
+    fi
+
 # application setup:
 COPY ./init ./peon_telegram/start.py init/
 COPY ./peon_common packages/peon_common

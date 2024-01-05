@@ -5,6 +5,8 @@ services:
         build:
             context: ./
             dockerfile: ./peon_telegram/Dockerfile
+            args:
+                - timezone=${timezone}
         depends_on:
             - mongodb
         networks:
@@ -17,6 +19,8 @@ services:
         build:
             context: ./
             dockerfile: ./peon_discord/Dockerfile
+            args:
+                - timezone=${timezone}
         depends_on:
             - mongodb
         networks:
