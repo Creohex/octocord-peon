@@ -85,7 +85,6 @@ def default_handler(
                     return
 
                 text = update.message.text[len(command) + 1 :].strip()
-                logging.info(f"({update.effective_user.name}) '{command}' -> '{text}'")
                 LOG.info(f"({update.effective_user.name}) '{command}' -> '{text}'")
 
                 if admin and update.effective_user.name not in admins():
