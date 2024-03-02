@@ -63,6 +63,10 @@ def gather_context(update) -> dict:
     }
 
 
+def sanitize_markdown(text: str) -> str:
+    return re.sub(r"(?<!\\)_", r"\_", text)
+
+
 def default_handler(
     command_override: str = None,
     require_input: bool = False,
@@ -94,7 +98,7 @@ def default_handler(
 
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id,
-                    text=callable(text, **gather_context(update)),
+                    text=sanitize_markdown(callable(text, **gather_context(update))),
                     reply_to_message_id=update.message.id if reply else None,
                     parse_mode=tgconstants.ParseMode.MARKDOWN,
                 )
@@ -198,7 +202,7 @@ def direct_message_handler(
                     # FIXME: Properly escape certain characters for ParseMode.MARKDOWN_V2
                     await context.bot.send_message(
                         chat_id=update.effective_chat.id,
-                        text=callable(text, **gather_context(update)),
+                        text=sanitize_markdown(callable(text, **gather_context(update))),
                         reply_to_message_id=update.message.id if reply else None,
                         parse_mode=tgconstants.ParseMode.MARKDOWN,
                     )
