@@ -66,8 +66,13 @@ def gather_context(update) -> dict:
     }
 
 
-def sanitize_markdown(text: str) -> str:
-    return re.sub(r"(?<!\\)_", r"\_", text)
+def sanitize_markdown(text: str, delim: str = "`") -> str:
+    """Assures that non-codeblock underscores are prepended with backslash."""
+
+    return delim.join(
+        chunk if index % 2 else re.sub(r"(?<!\+)_", r"\_", chunk)
+        for index, chunk in enumerate(text.split(delim))
+    )
 
 
 def default_handler(
