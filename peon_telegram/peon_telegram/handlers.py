@@ -142,7 +142,9 @@ def default_handler(
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id,
                     text=(
-                        f"Caught error:\n```{e}```" if constants.DEBUG else "¯\\\\\_😫\_/¯"
+                        f"Caught error:\n```{e}```"
+                        if constants.DEBUG
+                        else "¯\\\\\_😫\_/¯"
                     ),
                     parse_mode=MARKDOWN_PARSE_MODE,
                     reply_to_message_id=update.message.id,
@@ -205,9 +207,10 @@ def direct_message_handler(
             try:
                 text = update.message.text.strip()
                 if not text.startswith("/"):
-                    username = update.effective_user.name
-                    LOG.debug(f"({username}) handling direct message: '{text}'")
-                    # FIXME: Properly escape certain characters for ParseMode.MARKDOWN_V2
+                    LOG.debug(
+                        f"({update.effective_user.name}) handling direct message: '{text}'"
+                    )
+
                     await context.bot.send_message(
                         chat_id=update.effective_chat.id,
                         text=sanitize_markdown(callable(text, **gather_context(update))),

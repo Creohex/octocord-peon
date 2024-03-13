@@ -1,6 +1,5 @@
 """Telegram client-related constants."""
 
-
 DEBUG = True
 """Signals whether to post debug/exception data."""
 
