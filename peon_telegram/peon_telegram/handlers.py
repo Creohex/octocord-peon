@@ -39,6 +39,9 @@ LOG = logger(logging.DEBUG)
 HANDLERS = []
 """Handlers to be registered in telegram client."""
 
+MARKDOWN_PARSE_MODE = tgconstants.ParseMode.MARKDOWN
+"""Markdown mode to use for outgoing messages."""
+
 INLINE_HANDLER_SPECIAL_CHAR = "&"
 """Character that works as a signal for inline query to compute results."""
 
@@ -100,7 +103,7 @@ def default_handler(
                     chat_id=update.effective_chat.id,
                     text=sanitize_markdown(callable(text, **gather_context(update))),
                     reply_to_message_id=update.message.id if reply else None,
-                    parse_mode=tgconstants.ParseMode.MARKDOWN,
+                    parse_mode=MARKDOWN_PARSE_MODE,
                 )
             except CommandMalformed as cm:
                 if examples:
@@ -136,7 +139,7 @@ def default_handler(
                     text=(
                         f"Caught error:\n```{e}```" if constants.DEBUG else "¯\\\\\_😫\_/¯"
                     ),
-                    parse_mode=tgconstants.ParseMode.MARKDOWN,
+                    parse_mode=MARKDOWN_PARSE_MODE,
                     reply_to_message_id=update.message.id,
                 )
                 raise e
@@ -204,7 +207,7 @@ def direct_message_handler(
                         chat_id=update.effective_chat.id,
                         text=sanitize_markdown(callable(text, **gather_context(update))),
                         reply_to_message_id=update.message.id if reply else None,
-                        parse_mode=tgconstants.ParseMode.MARKDOWN,
+                        parse_mode=MARKDOWN_PARSE_MODE,
                     )
             except Exception as e:
                 raise e
