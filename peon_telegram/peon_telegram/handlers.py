@@ -215,6 +215,11 @@ def direct_message_handler(
                         parse_mode=MARKDOWN_PARSE_MODE,
                     )
             except Exception as e:
+                await context.bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text="There was a problem handling this request 😕",
+                    reply_to_message_id=update.message.id,
+                )
                 raise e
 
         HANDLERS.append(MessageHandler(filters.TEXT, wrapper))
