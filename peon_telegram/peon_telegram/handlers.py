@@ -355,6 +355,34 @@ def gpt_role_reset(text, **kwargs):
     return "role has been reset"
 
 
+@default_handler(admin=True, reply=True, require_input=True)
+def gpt_manage(text, **kwargs):
+    """
+    GPT-related management command.
+
+    Format: <command> <body>
+    Commands:
+        - show_role <owner>
+        - set_role <owner> <text>
+    """
+
+    match = re.search(r"^(?P<command>\w+)\s?(?P<arg1>\w+)?\s?(?P<body>.*)?$", text)
+    command = match.group("command")
+    arg1 = match.group("arg1")
+    body = match.group("body")
+
+    try:
+        match command:
+            case "get_role":
+                return Completion().get_role(arg1) or "default role"
+            case "set_role":
+                Completion().set_role(arg1, body)
+                return "Done"
+            case _:
+                return f"Unknown command provided: {command}"
+    except Exception as e:
+        return f"Encountered error:\n {str(e)}"
+
 # ---
 
 # @inline_handler
