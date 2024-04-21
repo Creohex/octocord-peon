@@ -165,13 +165,15 @@ async def cmd_slot(message, content, **kwargs):
     if success:
         await reply(
             message,
-            random.choice(GENERIC_GRATS).format(functions.format_user(message.author))
-            if random.choice([0, 1])
-            else functions.translate(
-                random.choice(GENERIC_GRATS),
-                lang_from="en",
-                lang_to=random.choice(functions.langs),
-            )["text"],
+            (
+                random.choice(GENERIC_GRATS).format(functions.format_user(message.author))
+                if random.choice([0, 1])
+                else functions.translate(
+                    random.choice(GENERIC_GRATS),
+                    lang_from="en",
+                    lang_to=random.choice(functions.langs),
+                )["text"]
+            ),
         )
 
 
