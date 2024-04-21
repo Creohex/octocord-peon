@@ -7,6 +7,8 @@ import time
 from abc import abstractmethod
 from datetime import datetime
 
+from discord.enums import ChannelType
+
 from peon_common import (
     exceptions,
     functions,
@@ -274,25 +276,49 @@ async def cmd_reverse(message, content, **kwargs):
     await reply(message, content[::-1])
 
 
+def sanitize_gpt_request(text, mention):
+    """GPT prompt sanitizer."""
+
+    pattern = r"^(\[\[(?P<user>[a-zA-Z]+)\]\(.*\)\]:\s)?(?P<message>.*)$"
+    match = re.search(pattern, text)
+    result = match.group("message")
+
+    if match.group("user"):
+        result = f"{match.group('user')} says: {match.group('message')}"
+
+    return re.sub(re.escape(mention), "you", result)
+
+
 async def cmd_gpt(message, content, **kwargs):
     """Make a GPT request."""
 
-    user_id = str(kwargs["client"].client.user.id)
-    mention = mention_format(user_id)
-    if not message.content.lower().startswith(mention):
+    mention = mention_format(kwargs["client"].client.user.id)
+    if not re.search(mention, message.content.lower()):
         return False
 
+    match message.channel.type:
+        case ChannelType.text:
+            chat_owner_id = message.channel.guild.id
+        case ChannelType.private:
+            chat_owner_id = message.author.id
+        case _:
+            raise Exception("Unsupported channel type")
+
     print(f"DEBUG: handling GPT request: '{content}'")
-    await reply(
-        message,
-        Completion().request(
-            content[len(mention) :],
-            owner_id=user_id,
+    try:
+        answer = Completion().request(
+            sanitize_gpt_request(message.content, mention),
+            owner_id=str(chat_owner_id),
             use_history=True,
             history_limit=3,
-        ),
-        mention_message=True,
-    )
+        )
+    except Exception as e:
+        print(f"DEBUG: Completion error: {str(e)}")
+        await reply(message, "something went wrong ;(", mention_message=True)
+        return True
+    print(f"DEBUG: reply: '{answer}'")
+
+    await reply(message, answer, mention_message=True)
     return True
 
 
