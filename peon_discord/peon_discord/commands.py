@@ -20,7 +20,7 @@ from peon_common.gpt import Completion
 CMD_SIGN = "!"
 """Character signifying the start of a command that has to be handled."""
 
-SENDER_PATTERN = r"^\[\w+\]\([\w:\/\-\.\#\!]+\):\s"
+SENDER_PATTERN = r"^\[\[\w+\]\([\w:\/\-\.\#\!]+\)\]:\s"
 """A regexp pattern for messages that contain sender hyperlink."""
 
 GENERIC_GRATS = [
