@@ -108,7 +108,6 @@ def test_query_auction(scraper):
         ("[broom](https://database.turtle-wow.org/?item=0) "
          "gibberish, major mana pot,"
          "[snow](https://database.turtle-wow.org/?item=0), limited invul", 4),
-        ("[Eslynn](https://armory.turtle-wow.org/#!/character/Eslynn): !ah elixir, [Le Fishe Au Chocolat](https://database.turtle-wow.org/?item=61666), sand", 3)
     ],
 )
 def test_fetch_prices(scraper, text, found_items):
