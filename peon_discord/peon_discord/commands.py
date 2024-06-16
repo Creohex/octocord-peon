@@ -19,6 +19,8 @@ from peon_common.gpt import Completion
 
 CMD_SIGN = "!"
 """Character signifying the start of a command that has to be handled."""
+ALTERNATIVE_CMD_SIGNS = ["@"]
+"""Command signs that can alternative be used."""
 
 SENDER_PATTERN = r"^\[\[\w+\]\([\w:\/\-\.\#\!]+\)\]:\s"
 """A regexp pattern for messages that contain sender hyperlink."""
@@ -435,7 +437,9 @@ class CommandSet:
             if sender_link:
                 message.content = message.content[len(sender_link.group()) :].strip()
 
-        if message.content.startswith(CMD_SIGN):
+        if message.content.startswith(CMD_SIGN) or any(
+            message.content.startswith(c) for c in ALTERNATIVE_CMD_SIGNS
+        ):
             message.content = message.content[1:]
 
         for command in self.commands:
