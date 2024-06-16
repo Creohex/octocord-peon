@@ -17,6 +17,12 @@ from peon_common import (
 from peon_common.gpt import Completion
 
 
+CMD_SIGN = "!"
+"""Character signifying the start of a command that has to be handled."""
+
+SENDER_PATTERN = r"^\[\w+\]\([\w:\/\-\.\#\!]+\):\s"
+"""A regexp pattern for messages that contain sender hyperlink."""
+
 GENERIC_GRATS = [
     "Congratulations!",
     "wow, unbelievable",
@@ -72,12 +78,13 @@ async def cmd_help(message, content, **kwargs):
     descriptions = []
 
     for command in commands:
-        info = command.prefix_full
+        full_prefix = f"{CMD_SIGN}{command.prefix}"
+        info = full_prefix
         if command.description:
             info = f"- {info} - {command.description}"
         if command.examples:
             examples = "\n * ".join(
-                [example.format(command.prefix_full) for example in command.examples]
+                [example.format(full_prefix) for example in command.examples]
             )
             info = f"{info}\n * {examples}"
 
@@ -98,14 +105,14 @@ async def cmd_tr(message, content, **kwargs):
     """Translate text using available translation services.
 
     Formats:
-        !tr <text> - translate <text> into russian (by default);
+        !tr <text> - translate <text> into english (by default);
         !tr<lang> <text> - translate <text> into <lang>;
         !tr<lang_1><lang_2> <text> - translate <text> from <lang_1> to <lang_2>.
     Language parameters must be in 2-char notation.
     """
 
     try:
-        result = functions.translate_helper(message.content[1:])
+        result = functions.translate_helper(message.content)
         await reply(message, f"({result['lang']}) {result['text']}")
     except exceptions.CommandMalformed:
         await reply(
@@ -127,7 +134,7 @@ async def cmd_roll(message, content, **kwargs):
     """
 
     text = functions.normalize_text(message.content.lower(), markdown=True)
-    raw = re.split(r" ?\+ ?", re.split(r"!roll ", text)[1])
+    raw = re.split(r" ?\+ ?", re.split(r"roll ", text)[1])
 
     try:
         if not len(raw):
@@ -278,6 +285,15 @@ async def cmd_reverse(message, content, **kwargs):
     await reply(message, content[::-1])
 
 
+async def cmd_ah_query(message, content, **kwargs):
+    """Query AH prices for linked items."""
+
+    if not content:
+        raise Exception("Content required")
+
+    await reply(message, functions.ah_query(content))
+
+
 def sanitize_gpt_request(text, mention):
     """GPT prompt sanitizer."""
 
@@ -341,21 +357,6 @@ class BaseCommand:
 class Command(BaseCommand):
     """Peon command object."""
 
-    CMD_SIGN = "!"
-    """Command sign."""
-
-    @property
-    def prefix_full(self):
-        """Returns complete prefix."""
-
-        return f"{self.CMD_SIGN}{self.prefix}"
-
-    @property
-    def content_offset(self):
-        """Returns content string offset."""
-
-        return len(self.prefix_full) + 1
-
     def __init__(self, prefix, func, **kwargs):
         """Initialize `Command` object.
 
@@ -379,18 +380,16 @@ class Command(BaseCommand):
     async def execute(self, message, **kwargs):
         """Execute function."""
 
-        if message.content.lower().startswith(self.prefix_full):
-            try:
-                # TODO: make proper logging
-                print(f'DEBUG: executing "{message.content}"')
+        if not message.content.startswith(self.prefix):
+            return False
 
-                await self.func(message, message.content[self.content_offset :], **kwargs)
-                return True
-            except Exception as e:
-                await message.add_reaction(emoji="😫")
-                raise Exception(e)
-
-        return False
+        try:
+            print(f'DEBUG: executing "{message.content}"')
+            await self.func(message, message.content[len(self.prefix) + 1 :], **kwargs)
+            return True
+        except Exception as e:
+            await message.add_reaction(emoji="😫")
+            raise Exception(e)
 
 
 class MentionHandler(BaseCommand):
@@ -430,6 +429,14 @@ class CommandSet:
 
     async def execute(self, message):
         """Executes commands in order and terminates after first successful command."""
+
+        if message.content.startswith("["):
+            sender_link = re.match(SENDER_PATTERN, message.content)
+            if sender_link:
+                message.content = message.content[len(sender_link.group()) :].strip()
+
+        if message.content.startswith(CMD_SIGN):
+            message.content = message.content[1:]
 
         for command in self.commands:
             if await command.execute(

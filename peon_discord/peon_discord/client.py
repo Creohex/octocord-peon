@@ -77,6 +77,7 @@ class Peon():
                     description="reverse given text",
                     examples=["{0} olleH"]),
             Command("stats", commands.cmd_stats, description="print various peon stats"),
+            Command("ah", commands.cmd_ah_query, description="query twow ah"),
             MentionHandler(commands.cmd_gpt),
         ])
         self.start_time = datetime.now()

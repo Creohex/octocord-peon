@@ -8,29 +8,67 @@ import requests
 import socket
 import time
 import urllib.parse
+import yarl
+from pathlib import Path
 
 import nltk.chat.eliza
 import psutil
 
+from .ah import AHScraper
 from .exceptions import (
     CommandExecutionError,
     CommandMalformed,
 )
-from .gpt import Completion
 
 
-BYTES_GB = 2 ** 30
+BYTES_GB = 2**30
 """Bytes in a gigabyte."""
 
 MORSE_CODE = {
-    "a":".-", "b":"-...", "c":"-.-.", "d":"-..", "e":".", "f":"..-.", "g":"--.",
-    "h":"....", "i":"..", "j":".---", "k":"-.-", "l":".-..", "m":"--", "n":"-.",
-    "o":"---", "p":".--.", "q":"--.-", "r":".-.", "s":"...", "t":"-", "u":"..-",
-    "v":"...-", "w":".--", "x":"-..-", "y":"-.--", "z":"--..",
-    "1":".----", "2":"..---", "3":"...--", "4":"....-", "5":".....",
-    "6":"-....", "7":"--...", "8":"---..", "9":"----.", "0":"-----",
-    ", ":"--..--", ".":".-.-.-", "?":"..--..", "/":"-..-.", "-":"-....-",
-    "(":"-.--.", ")":"-.--.-", " ": " ",
+    "a": ".-",
+    "b": "-...",
+    "c": "-.-.",
+    "d": "-..",
+    "e": ".",
+    "f": "..-.",
+    "g": "--.",
+    "h": "....",
+    "i": "..",
+    "j": ".---",
+    "k": "-.-",
+    "l": ".-..",
+    "m": "--",
+    "n": "-.",
+    "o": "---",
+    "p": ".--.",
+    "q": "--.-",
+    "r": ".-.",
+    "s": "...",
+    "t": "-",
+    "u": "..-",
+    "v": "...-",
+    "w": ".--",
+    "x": "-..-",
+    "y": "-.--",
+    "z": "--..",
+    "1": ".----",
+    "2": "..---",
+    "3": "...--",
+    "4": "....-",
+    "5": ".....",
+    "6": "-....",
+    "7": "--...",
+    "8": "---..",
+    "9": "----.",
+    "0": "-----",
+    ", ": "--..--",
+    ".": ".-.-.-",
+    "?": "..--..",
+    "/": "-..-.",
+    "-": "-....-",
+    "(": "-.--.",
+    ")": "-.--.-",
+    " ": " ",
 }
 """Morse code dictionary."""
 
@@ -57,36 +95,147 @@ ICOSAHEDRON = [
     "You may rely on it.",
 ]
 """8ball messages."""
-langs = ["af", "ga", "sq", "it", "ar", "ja", "az", "kn", "eu", "ko", "bn", "la",
-         "be", "lv", "bg", "lt", "ca", "mk", "ms", "mt", "hr", "no", "cs", "fa",
-         "da", "pl", "nl", "pt", "en", "ro", "eo", "ru", "et", "sr", "tl", "sk",
-         "fi", "sl", "fr", "es", "gl", "sw", "ka", "sv", "de", "ta", "el", "te",
-         "gu", "th", "ht", "tr", "iw", "uk", "hi", "ur", "hu", "vi", "is", "cy",
-         "id", "yi"]
+langs = [
+    "af",
+    "ga",
+    "sq",
+    "it",
+    "ar",
+    "ja",
+    "az",
+    "kn",
+    "eu",
+    "ko",
+    "bn",
+    "la",
+    "be",
+    "lv",
+    "bg",
+    "lt",
+    "ca",
+    "mk",
+    "ms",
+    "mt",
+    "hr",
+    "no",
+    "cs",
+    "fa",
+    "da",
+    "pl",
+    "nl",
+    "pt",
+    "en",
+    "ro",
+    "eo",
+    "ru",
+    "et",
+    "sr",
+    "tl",
+    "sk",
+    "fi",
+    "sl",
+    "fr",
+    "es",
+    "gl",
+    "sw",
+    "ka",
+    "sv",
+    "de",
+    "ta",
+    "el",
+    "te",
+    "gu",
+    "th",
+    "ht",
+    "tr",
+    "iw",
+    "uk",
+    "hi",
+    "ur",
+    "hu",
+    "vi",
+    "is",
+    "cy",
+    "id",
+    "yi",
+]
 translit_map = {
-    "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "e", "ж": "zh",
-    "з": "z", "и": "i", "й": "y", "к": "k", "л": "l", "м": "m", "н": "n", "о": "o",
-    "п": "p", "р": "r", "с": "s", "т": "t", "у": "u", "ф": "f", "х": "h", "ц": "ts",
-    "ч": "ch", "ш": "sh", "щ": "sh'", "ы": "y", "э": "e", "ю": "yu", "я": "ya",
+    "а": "a",
+    "б": "b",
+    "в": "v",
+    "г": "g",
+    "д": "d",
+    "е": "e",
+    "ё": "e",
+    "ж": "zh",
+    "з": "z",
+    "и": "i",
+    "й": "y",
+    "к": "k",
+    "л": "l",
+    "м": "m",
+    "н": "n",
+    "о": "o",
+    "п": "p",
+    "р": "r",
+    "с": "s",
+    "т": "t",
+    "у": "u",
+    "ф": "f",
+    "х": "h",
+    "ц": "ts",
+    "ч": "ch",
+    "ш": "sh",
+    "щ": "sh'",
+    "ы": "y",
+    "э": "e",
+    "ю": "yu",
+    "я": "ya",
 }
 punto_map = {
-    "a": "ф", "b": "и", "c": "с", "d": "в", "e": "у", "f": "а", "g": "п",
-    "h": "р", "i": "ш", "j": "о", "k": "л", "l": "д", "m": "ь", "n": "т",
-    "o": "щ", "p": "з", "q": "й", "r": "к", "s": "ы", "t": "е", "u": "г",
-    "v": "м", "w": "ц", "x": "ч", "y": "н", "z": "я", ";": "ж", "'": "э",
-    "`": "ё", ",": "б", ".": "ю",
+    "a": "ф",
+    "b": "и",
+    "c": "с",
+    "d": "в",
+    "e": "у",
+    "f": "а",
+    "g": "п",
+    "h": "р",
+    "i": "ш",
+    "j": "о",
+    "k": "л",
+    "l": "д",
+    "m": "ь",
+    "n": "т",
+    "o": "щ",
+    "p": "з",
+    "q": "й",
+    "r": "к",
+    "s": "ы",
+    "t": "е",
+    "u": "г",
+    "v": "м",
+    "w": "ц",
+    "x": "ч",
+    "y": "н",
+    "z": "я",
+    ";": "ж",
+    "'": "э",
+    "`": "ё",
+    ",": "б",
+    ".": "ю",
 }
-punto_map_reversed = {v: k for k,v in punto_map.items()}
+punto_map_reversed = {v: k for k, v in punto_map.items()}
 tr_endpoints = {
     "clients5": {
         "url_template": "https://clients5.google.com/translate_a/t?"
-            "client=dict-chrome-ex&sl={0}&tl={1}&dt=t&q={2}",
+        "client=dict-chrome-ex&sl={0}&tl={1}&dt=t&q={2}",
         "get_lang": lambda _: _["ld_result"]["srclangs"][0],
         "get_text": lambda _: _["sentences"]["trans"],
     },
     "translate": {
         "url_template": "https://translate.googleapis.com/translate_a/"
-            "single?client=gtx&sl={0}&tl={1}&dt=t&q={2}",
+        "single?client=gtx&sl={0}&tl={1}&dt=t&q={2}",
         "get_lang": lambda _: _[2],
         "get_text": lambda _: "".join(b[0] for b in _[0]),
     },
@@ -94,6 +243,11 @@ tr_endpoints = {
 default_chance = 15
 simple_replies_collection = {"specific_name": [50, [""]]}
 ascii_ascending_luminance = ".,-~:;=!*#$@"
+
+CURR_DIR = Path(__file__).resolve(strict=True).parent
+AH_BASE_URL = yarl.URL("https://www.wowauctions.net/auctionHouse")
+NORDNAAR_AH_SCRAPER = AHScraper(AH_BASE_URL / "turtle-wow/nordanaar/mergedAh/", CURR_DIR / "twow_items.json")
+"""Auction house objects."""
 
 
 def de_latinize(text):
@@ -104,8 +258,20 @@ def de_latinize(text):
     :return: normalized text
     """
 
-    chars = {'e': 'е', 't': 'т', 'y': 'у', 'o': 'о', 'p': 'р', 'a': 'а',
-            'h': 'н', 'k': 'к', 'x': 'х', 'c': 'с', 'b': 'в', 'm': 'м'}
+    chars = {
+        "e": "е",
+        "t": "т",
+        "y": "у",
+        "o": "о",
+        "p": "р",
+        "a": "а",
+        "h": "н",
+        "k": "к",
+        "x": "х",
+        "c": "с",
+        "b": "в",
+        "m": "м",
+    }
     for k, v in chars.items():
         text = text.replace(k, v)
     return text
@@ -119,7 +285,7 @@ def transform_special_characters(text):
     :return: transformed text
     """
 
-    coll = {'}{': 'х', 'III': 'ш', '()': 'o'}
+    coll = {"}{": "х", "III": "ш", "()": "o"}
     for k, v in coll.items():
         text = text.replace(k, v)
     return text
@@ -138,8 +304,10 @@ def normalize_text(
 
     if simple_mask:
         text = re.sub(
-            r'\^|\$|!|#|%|^|&|€|£|¢|¥|§|<|>|\?|~|\*|,|[0-9]|:|;|\[|\]|=|-|\+|_',
-            '', text.lower()).replace('ё', 'е')
+            r"\^|\$|!|#|%|^|&|€|£|¢|¥|§|<|>|\?|~|\*|,|[0-9]|:|;|\[|\]|=|-|\+|_",
+            "",
+            text.lower(),
+        ).replace("ё", "е")
     if do_de_latinize:
         text = de_latinize(text)
     if special_chars:
@@ -157,9 +325,7 @@ def translate(text, lang_from=None, lang_to=None, endpoint="translate"):
         endpoints = ", ".join(list(tr_endpoints.keys()))
         raise Exception(f"Unsupported endpoint provided. Possible values: {endpoints}")
     tr_toolset = tr_endpoints[endpoint]
-    url = tr_toolset["url_template"].format(lang_from or "auto",
-                                            lang_to or "en",
-                                            text)
+    url = tr_toolset["url_template"].format(lang_from or "auto", lang_to or "en", text)
     raw = json.loads(requests.get(url).text)
 
     return {
@@ -172,7 +338,7 @@ def translate_helper(raw_text):
     """Helper for translate(), managing prefix configurations."""
 
     prefix = raw_text.split()[0]
-    text = raw_text[len(prefix)+1:]
+    text = raw_text[len(prefix) + 1 :]
 
     if len(prefix) == 2:
         return translate(text)
@@ -181,8 +347,7 @@ def translate_helper(raw_text):
     elif len(prefix) == 6:
         return translate(text, lang_from=prefix[2:4], lang_to=prefix[4:6])
     else:
-        raise CommandMalformed(
-            f"Received invalid translation command '{raw_text}'")
+        raise CommandMalformed(f"Received invalid translation command '{raw_text}'")
 
 
 def mangle(text, resulting_lang="ru", hops=4):
@@ -233,7 +398,7 @@ def starify(sentence, limit=600):
         if last_char is None or last_char in excluded:
             last_char = random.choice(alphabet)
         else:
-            last_char = random.choice(alphabet.replace(last_char, ''))
+            last_char = random.choice(alphabet.replace(last_char, ""))
         sky += last_char
 
     return sky
@@ -242,25 +407,27 @@ def starify(sentence, limit=600):
 def roll(roll_indices: list[str]):
     """Roll dice."""
 
-    dice_limit = 10 ** 30
+    dice_limit = 10**30
 
     def get_rolls(s):
         if "-" in s:
-            left, right = (int(value) for value in re.split(r'-', s))
+            left, right = (int(value) for value in re.split(r"-", s))
             if left > dice_limit or right > dice_limit:
                 raise Exception("range value(s) are too high")
             return (f"{left}-{right}:", [random.randint(left, right)])
         else:
-            roll_params = re.split(r'd', s if "d" in s else f"d{s}")
-            throws = 1 if roll_params[0] == '' else int(roll_params[0])
+            roll_params = re.split(r"d", s if "d" in s else f"d{s}")
+            throws = 1 if roll_params[0] == "" else int(roll_params[0])
             sides = int(roll_params[1])
             if sides == 0:
                 raise Exception("wrong arg")
             if throws > 100 or sides > dice_limit:
                 raise Exception("dice size/throw count is too high")
 
-            return (f"{throws}d{sides}:",
-                    [random.randint(1, sides) for _ in range(throws)])
+            return (
+                f"{throws}d{sides}:",
+                [random.randint(1, sides) for _ in range(throws)],
+            )
 
     rolls = [get_rolls(_) for _ in roll_indices]
     text = None
@@ -289,8 +456,9 @@ def slot_sequence(emojis, slots=3, seq_len=8):
 
     emojis = [format_emoji(e) for e in emojis]
     sample = [emojis.pop(emojis.index(random.choice(emojis))) for _ in range(slots)]
-    sequence = [" ".join(random.choice(sample) for slot in range(slots))
-                for seq in range(seq_len)]
+    sequence = [
+        " ".join(random.choice(sample) for slot in range(slots)) for seq in range(seq_len)
+    ]
     success = sequence[-1].count(sequence[-1].split()[0]) == slots
 
     return sequence, success
@@ -323,8 +491,10 @@ def wiki_summary(query):
     uri = f"https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(query)}"
     try:
         req = json.loads(requests.get(uri).text)
-        return (f"{req['title']}:\n{req['extract']}\n"
-                f"({req['content_urls']['desktop']['page']})")
+        return (
+            f"{req['title']}:\n{req['extract']}\n"
+            f"({req['content_urls']['desktop']['page']})"
+        )
     except KeyError:
         raise CommandExecutionError()
 
@@ -351,9 +521,13 @@ def urban_query(token, query):
 
     if len(res["list"]):
         descr = res["list"][0]
-        mask = r'\[|\]'
-        return (descr["word"], re.sub(mask, '', descr["definition"]),
-                re.sub(mask, '', descr["example"]), descr["permalink"])
+        mask = r"\[|\]"
+        return (
+            descr["word"],
+            re.sub(mask, "", descr["definition"]),
+            re.sub(mask, "", descr["example"]),
+            descr["permalink"],
+        )
 
     return None
 
@@ -391,8 +565,11 @@ def from_morse(text):
     for word in (w.strip() for w in words):
         if word:
             words_translated.append(
-                "".join(next((k for k, v in morse_map if v == char), "")
-                        for char in word.split()))
+                "".join(
+                    next((k for k, v in morse_map if v == char), "")
+                    for char in word.split()
+                )
+            )
 
     return " ".join(words_translated)
 
@@ -433,13 +610,23 @@ def resource_usage(text):
     """Returns host system resource usage."""
 
     def mem_summary(resource):
-        return (f"{round(resource.percent, 1)}% "
-                f"({round(resource.used / BYTES_GB, 2)}GB/"
-                f"{round(resource.total / BYTES_GB, 2)}GB)")
+        return (
+            f"{round(resource.percent, 1)}% "
+            f"({round(resource.used / BYTES_GB, 2)}GB/"
+            f"{round(resource.total / BYTES_GB, 2)}GB)"
+        )
 
     cpu_avg = psutil.getloadavg()[-1] / psutil.cpu_count() * 100
-    return (f"{socket.gethostname()}:\n"
-            f"CPU: {round(cpu_avg, 1)}% ({os.cpu_count()} cores)\n"
-            f"RAM: {mem_summary(psutil.virtual_memory())}\n"
-            f"swap: {mem_summary(psutil.swap_memory())}\n"
-            f"disk: {mem_summary(psutil.disk_usage('/'))}")
+    return (
+        f"{socket.gethostname()}:\n"
+        f"CPU: {round(cpu_avg, 1)}% ({os.cpu_count()} cores)\n"
+        f"RAM: {mem_summary(psutil.virtual_memory())}\n"
+        f"swap: {mem_summary(psutil.swap_memory())}\n"
+        f"disk: {mem_summary(psutil.disk_usage('/'))}"
+    )
+
+
+def ah_query(text: str) -> str:
+    """Fetch AH prices for items specified in text."""
+
+    return NORDNAAR_AH_SCRAPER.format_item_prices(NORDNAAR_AH_SCRAPER.fetch_prices(text))
