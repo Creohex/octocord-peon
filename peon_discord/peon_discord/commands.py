@@ -21,6 +21,7 @@ CMD_SIGN = "!"
 """Character signifying the start of a command that has to be handled."""
 ALTERNATIVE_CMD_SIGNS = ["%"]
 """Command signs that can alternative be used."""
+CMD_SIGNS = [CMD_SIGN] + ALTERNATIVE_CMD_SIGNS
 
 SENDER_PATTERN = r"^\[\[\w+\]\([\w:\/\-\.\#\!]+\)\]:\s"
 """A regexp pattern for messages that contain sender hyperlink."""
@@ -382,7 +383,10 @@ class Command(BaseCommand):
     async def execute(self, message, **kwargs):
         """Execute function."""
 
-        if not message.content.startswith(self.prefix):
+        if not (
+            message.content[0] in CMD_SIGNS
+            and message.content[1:].startswith(self.prefix)
+        ):
             return False
 
         try:
@@ -436,11 +440,6 @@ class CommandSet:
             sender_link = re.match(SENDER_PATTERN, message.content)
             if sender_link:
                 message.content = message.content[len(sender_link.group()) :].strip()
-
-        if message.content.startswith(CMD_SIGN) or any(
-            message.content.startswith(c) for c in ALTERNATIVE_CMD_SIGNS
-        ):
-            message.content = message.content[1:]
 
         for command in self.commands:
             if await command.execute(
