@@ -389,9 +389,11 @@ class Command(BaseCommand):
         ):
             return False
 
+        text = message.content[len(self.prefix) + 1 :].strip()
+
         try:
             print(f'DEBUG: executing "{message.content}"')
-            await self.func(message, message.content[len(self.prefix) + 1 :], **kwargs)
+            await self.func(message, text, **kwargs)
             return True
         except Exception as e:
             await message.add_reaction(emoji="😫")
