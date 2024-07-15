@@ -8,8 +8,9 @@ from peon_common.ah import AHScraper, Item, Price
 
 
 AH_BASE_URL = "https://www.wowauctions.net/auctionHouse"
-NORDNAAR_AH_SCRAPER = AHScraper(f"{AH_BASE_URL}/turtle-wow/nordanaar/mergedAh/",
-                                Path("peon_common/twow_items.json"))
+NORDNAAR_AH_SCRAPER = AHScraper(
+    f"{AH_BASE_URL}/turtle-wow/nordanaar/mergedAh/", Path("peon_common/twow_items.json")
+)
 
 
 TEST_DIR = Path(__file__).resolve(strict=True).parent
@@ -24,8 +25,7 @@ with open(AH_REPLY_EXAMPLE_FILE, "r") as f:
 @pytest.fixture()
 def scraper():
     ah_scraper = AHScraper(TEST_URL, TEST_DIR.parent / "twow_items.json")
-    response_mock = mock.MagicMock()
-    response_mock.text = lambda: AH_REPLY_EXAMPLE
+    response_mock = mock.MagicMock(text=AH_REPLY_EXAMPLE)
 
     with mock.patch.object(requests, "get", return_value=response_mock):
         yield ah_scraper
@@ -56,8 +56,11 @@ def test_price():
     ("item", "expected_url"),
     [
         (Item(0, "item0"), TEST_URL / "item0-0"),
-        (Item(123, "A rather complex 'string' #abc!"), TEST_URL / "a-rather-complex-string-abc-123"),
-    ]
+        (
+            Item(123, "A rather complex 'string' #abc!"),
+            TEST_URL / "a-rather-complex-string-abc-123",
+        ),
+    ],
 )
 def test_build_query_url(scraper, item, expected_url):
     complete_url = scraper.build_query_url(item)
@@ -93,8 +96,37 @@ def test_query_auction(scraper):
     item = Item(61224, "Dreamshared Elixir")
     assert item.price.value == 0
 
-    price = scraper._query_auction(item)
-    assert price.value == 15900
+    scraper._query_auction(item)
+    assert item.price.value == 15900
+
+
+def test_query_auction_caching(scraper):
+    item = Item(61224, "Dreamshared Elixir")
+    assert item.price.value == 0
+
+    with mock.patch.object(
+        requests, "get", return_value=mock.MagicMock(text=AH_REPLY_EXAMPLE)
+    ) as get_mock:
+        scraper._query_auction(item)
+        assert item.price.value == 15900
+        assert get_mock.call_count == 1
+
+        with mock.patch("peon_common.ah.dt") as dt:
+            ts = mock.MagicMock()
+            dt.now.return_value.timestamp = ts
+
+            item.last_updated = 500
+            ts.return_value=501
+            scraper._query_auction(item)
+            assert get_mock.call_count == 1
+
+            ts.return_value = item.last_updated + scraper.INVALIDATE_AFTER - 1
+            scraper._query_auction(item)
+            assert get_mock.call_count == 1
+
+            ts.return_value = item.last_updated + scraper.INVALIDATE_AFTER
+            scraper._query_auction(item)
+            assert get_mock.call_count == 2
 
 
 @pytest.mark.parametrize(
@@ -105,9 +137,12 @@ def test_query_auction(scraper):
         ("dreamsha", 1),
         ("[broom](https://database.turtle-wow.org/?item=0)", 1),
         ("[broom](https://database.turtle-wow.org/?item=0) major rejuv", 2),
-        ("[broom](https://database.turtle-wow.org/?item=0) "
-         "gibberish, major mana pot,"
-         "[snow](https://database.turtle-wow.org/?item=0), limited invul", 4),
+        (
+            "[broom](https://database.turtle-wow.org/?item=0) "
+            "gibberish, major mana pot,"
+            "[snow](https://database.turtle-wow.org/?item=0), limited invul",
+            4,
+        ),
     ],
 )
 def test_fetch_prices(scraper, text, found_items):
