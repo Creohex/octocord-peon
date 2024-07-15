@@ -147,10 +147,10 @@ class AHScraper:
 
         return Item(self.items[closest_item], closest_item)
 
-    def _query_auction(self, item: Item) -> str:
+    def _query_auction(self, item: Item) -> None:
         cached = self.cache.get(item.id)
         if cached:
-            if (cached.last_updated - dt.now().timestamp()) < self.INVALIDATE_AFTER:
+            if (dt.now().timestamp() - cached.last_updated) < self.INVALIDATE_AFTER:
                 item.update(cached)
                 return
 
@@ -188,9 +188,6 @@ class AHScraper:
                     items.add(found)
 
         list(map(self._query_auction, items))
-        # for item in items:
-        #     self._query_auction(item)
-        #     item.price = self._query_auction(item)
 
         return items
 
