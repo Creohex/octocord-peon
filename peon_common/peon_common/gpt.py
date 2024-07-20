@@ -11,7 +11,10 @@ from peon_common.models import Singleton
 MAX_TOKENS = 1000
 """Maximum tokens per completion."""
 
-MODEL_DEFAULT = "gpt-3.5-turbo"
+MODEL_3_5_TURBO = "gpt-3.5-turbo"
+MODEL_4_O = "gpt-4o"
+MODEL_4_O_MINI = "gpt-4o-mini"
+MODEL_DEFAULT = MODEL_4_O_MINI
 """Default model used for completions."""
 
 TEMPERATURE_DEFAULT = 0.3
