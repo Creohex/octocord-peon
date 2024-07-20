@@ -40,7 +40,7 @@ ROLES = {
 }
 """GPT chat role descriptions."""
 
-ROLE_DESCRIPTION_MAX_LENGTH = 600
+ROLE_DESCRIPTION_MAX_LENGTH = 1000
 """Maximum string length for custom role descriptions."""
 
 MESSAGE_ROLE_TYPES = ["system", "user", "assistant", "tool"]
