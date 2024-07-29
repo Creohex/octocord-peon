@@ -246,7 +246,9 @@ ascii_ascending_luminance = ".,-~:;=!*#$@"
 
 CURR_DIR = Path(__file__).resolve(strict=True).parent
 AH_BASE_URL = yarl.URL("https://www.wowauctions.net/auctionHouse")
-NORDNAAR_AH_SCRAPER = AHScraper(AH_BASE_URL / "turtle-wow/nordanaar/mergedAh/", CURR_DIR / "twow_items.json")
+NORDNAAR_AH_SCRAPER = AHScraper(
+    AH_BASE_URL / "turtle-wow/nordanaar/mergedAh/", CURR_DIR / "twow_items.json"
+)
 """Auction house objects."""
 
 
@@ -334,20 +336,18 @@ def translate(text, lang_from=None, lang_to=None, endpoint="translate"):
     }
 
 
-def translate_helper(raw_text):
+def translate_helper(spec, text):
     """Helper for translate(), managing prefix configurations."""
 
-    prefix = raw_text.split()[0]
-    text = raw_text[len(prefix) + 1 :]
-
-    if len(prefix) == 2:
-        return translate(text)
-    elif len(prefix) == 4:
-        return translate(text, lang_to=prefix[2:4])
-    elif len(prefix) == 6:
-        return translate(text, lang_from=prefix[2:4], lang_to=prefix[4:6])
-    else:
-        raise CommandMalformed(f"Received invalid translation command '{raw_text}'")
+    match len(spec):
+        case 2:
+            return translate(text)
+        case 4:
+            return translate(text, lang_to=spec[2:4])
+        case 6:
+            return translate(text, lang_from=spec[2:4], lang_to=spec[4:6])
+        case _:
+            raise CommandMalformed(f"Received invalid translation spec: '{spec}'")
 
 
 def mangle(text, resulting_lang="ru", hops=4):

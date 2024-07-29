@@ -115,7 +115,7 @@ async def cmd_tr(message, content, **kwargs):
     """
 
     try:
-        result = functions.translate_helper(message.content)
+        result = functions.translate_helper(kwargs["prefix"], content)
         await reply(message, f"({result['lang']}) {result['text']}")
     except exceptions.CommandMalformed:
         await reply(
@@ -389,7 +389,8 @@ class Command(BaseCommand):
         ):
             return False
 
-        text = message.content[len(self.prefix) + 1 :].strip()
+        prefix, text = message.content[1:].strip().split(maxsplit=1)
+        kwargs["prefix"] = prefix
 
         try:
             print(f'DEBUG: executing "{message.content}"')
