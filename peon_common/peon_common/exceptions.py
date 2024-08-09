@@ -53,3 +53,8 @@ class DocumentNotFound(Error):
 class DocumentValidationError(Error):
     def __init__(self, message=None, *args, **kwargs):
         super().__init__(message, *args, **kwargs)
+
+
+class ServiceUnavailable(Error):
+    def __init__(self, message=None, *args, **kwargs):
+        super().__init__(message, *args, **kwargs)
