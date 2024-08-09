@@ -15,7 +15,7 @@ from .exceptions import (
     ServiceUnavailable,
     ValidationError,
 )
-from peon_common.misc import (
+from .misc import (
     Singleton,
     Weather,
 )
@@ -130,6 +130,7 @@ class IntentManager:
 
     @staticmethod
     def query_weather(text):
+        print(f"DEBUG (weather intent): {text}")
         location_raw = Completion().request(
             "Analyze the following message, if it contains a location "
             "(city, country, etc), return it as a single word. If none found, "
