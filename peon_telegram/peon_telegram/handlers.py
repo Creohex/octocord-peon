@@ -383,6 +383,7 @@ def gpt_manage(text, **kwargs):
     except Exception as e:
         return f"Encountered error:\n {str(e)}"
 
+
 # ---
 
 # @inline_handler
@@ -402,5 +403,9 @@ def gpt_manage(text, **kwargs):
 @direct_message_handler(reply=True)
 def direct_chat(text, **kwargs):
     return Completion().request(
-        text, owner_id=kwargs["message_author"], use_history=True, history_limit=3
+        text,
+        owner_id=kwargs["message_author"],
+        use_history=True,
+        history_limit=3,
+        handle_intents=True,
     )

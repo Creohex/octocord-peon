@@ -332,6 +332,7 @@ async def cmd_gpt(message, content, **kwargs):
             owner_id=str(chat_owner_id),
             use_history=True,
             history_limit=3,
+            handle_intents=True,
         )
     except Exception as e:
         print(f"DEBUG: Completion error: {str(e)}")
