@@ -1,11 +1,24 @@
 import os
-from datetime import datetime, timedelta
+from abc import ABCMeta, abstractmethod
+from datetime import datetime as dt, timedelta
+from string import ascii_letters
+from typing import Self
 
 import openai
+import requests
+from yarl import URL
 
-from peon_common.db import GPTChatHistory, GPTRoleSetting
-from peon_common.exceptions import DocumentValidationError, ValidationError
-from peon_common.models import Singleton
+from .ah import NORDNAAR_AH_SCRAPER as AH
+from .db import GPTChatHistory, GPTRoleSetting
+from .exceptions import (
+    DocumentValidationError,
+    ServiceUnavailable,
+    ValidationError,
+)
+from peon_common.misc import (
+    Singleton,
+    Weather,
+)
 
 
 MAX_TOKENS = 1000
@@ -43,11 +56,91 @@ ROLES = {
 ROLE_DESCRIPTION_MAX_LENGTH = 1000
 """Maximum string length for custom role descriptions."""
 
-MESSAGE_ROLE_TYPES = ["system", "user", "assistant", "tool"]
+MESSAGE_ROLE_SYSTEM = "system"
+MESSAGE_ROLE_USER = "user"
+MESSAGE_ROLE_ASSISTANT = "assistant"
+MESSAGE_ROLE_TOOL = "tool"
+MESSAGE_ROLE_TYPES = [
+    MESSAGE_ROLE_SYSTEM,
+    MESSAGE_ROLE_USER,
+    MESSAGE_ROLE_ASSISTANT,
+    MESSAGE_ROLE_TOOL,
+]
 """Existing completion role types."""
 
 EXPIRATION_DELTA = timedelta(days=1)
 """Default delta to consider GPT interaction as expired."""
+
+RASA_PROVIDER_URL_ENV = "rasa_provider"
+"""Rasa hostname."""
+
+
+class IntentProvider(metaclass=ABCMeta):
+    @abstractmethod
+    def get_intent(self, text: str) -> str:
+        return NotImplemented
+
+
+class RasaLocal(IntentProvider):
+    MIN_CONFIDENCE = 0.85
+    """Intent determination certainty % cut-off."""
+
+    @property
+    def text_parse_url(self):
+        return self.url / "model/parse"
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.url = URL(os.environ[RASA_PROVIDER_URL_ENV])
+
+    def get_intent(self, text: str) -> str:
+        try:
+            response = requests.post(self.text_parse_url, json={"text": text})
+        except:
+            raise ServiceUnavailable()
+        if not response.ok:
+            raise ServiceUnavailable()
+
+        data = response.json()
+
+        return {
+            "intent": data["intent"],
+            "entities": data["entities"],
+        }
+
+
+class IntentManager:
+    def __init__(self, intent_engine: IntentProvider) -> Self:
+        self.intent_provider = intent_engine
+        self.intents = {
+            "query_ah": lambda text: AH.fetch_prices(text, format=True),
+            "query_weather": self.query_weather,
+        }
+
+    def handle_prompt(self, text):
+        try:
+            intent = self.intent_provider.get_intent(text)["intent"]["name"]
+        except ServiceUnavailable:
+            return None
+
+        if intent not in self.intents:
+            return None
+
+        return self.intents[intent](text)
+
+    @staticmethod
+    def query_weather(text):
+        location_raw = Completion().request(
+            "Analyze the following message, if it contains a location "
+            "(city, country, etc), return it as a single word. If none found, "
+            f"reply with “none”: MESSAGE: {text}"
+        )
+        location = "".join(c for c in location_raw.lower() if c in ascii_letters)
+
+        if location == "none":
+            return None
+
+        return Weather().query_weather(location)
 
 
 # TODO: fetch/show billing/usage
@@ -59,6 +152,7 @@ class Completion(Singleton):
         self.model = MODEL_DEFAULT
         self.max_tokens = MAX_TOKENS
         self.temperature = TEMPERATURE_DEFAULT
+        self.intent_manager = IntentManager(intent_engine=RasaLocal())
 
     @classmethod
     def message(cls, role: str, content: str) -> dict:
@@ -105,31 +199,32 @@ class Completion(Singleton):
         self,
         prompt: str,
         owner_id: str = None,
-        use_history=False,
-        history_limit=2,
+        use_history: bool = False,
+        history_limit: int = 2,
+        handle_intents: bool = False,
     ) -> str:
         """Make request to selected GPT model."""
 
-        if not owner_id:
-            return openai.ChatCompletion.create(
-                model=self.model,
-                messages=[
-                    self.message("system", ROLE_DEFAULT),
-                    self.message("user", prompt),
-                ],
-            )["choices"][0]["message"]["content"]
+        if owner_id:
+            role_description = self.get_role(owner_id) or ROLE_DEFAULT
+            messages = [self.message("system", role_description)]
+            if use_history:
+                previous_messages = GPTChatHistory.fetch(
+                    owner_id, after_ts=dt.now() - EXPIRATION_DELTA
+                )
+                messages.extend(previous_messages[-history_limit * 2 :])
+        else:
+            messages = [self.message("system", ROLE_DEFAULT)]
 
-        role_description = self.get_role(owner_id) or ROLE_DEFAULT
-        messages = [self.message("system", role_description)]
-        if use_history:
-            previous_messages = GPTChatHistory.fetch(
-                owner_id, after_ts=datetime.now() - EXPIRATION_DELTA
-            )
-            messages.extend(previous_messages[-history_limit * 2 :])
+        if handle_intents:
+            if context := self.intent_manager.handle_prompt(prompt):
+                prompt = f"{prompt}\n\nRELATED DATA:\n{context}"
+
         messages.append(self.message("user", prompt))
-
         reply = openai.ChatCompletion.create(model=self.model, messages=messages)
         assistant_msg = reply["choices"][0]["message"]["content"]
-        GPTChatHistory.store(owner_id, prompt, assistant_msg)
+
+        if owner_id:
+            GPTChatHistory.store(owner_id, prompt, assistant_msg)
 
         return assistant_msg
