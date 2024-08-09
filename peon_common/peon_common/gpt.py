@@ -113,7 +113,7 @@ class IntentManager:
     def __init__(self, intent_engine: IntentProvider) -> Self:
         self.intent_provider = intent_engine
         self.intents = {
-            "query_ah": lambda text: AH.fetch_prices(text, format=True),
+            # "query_ah": lambda text: AH.fetch_prices(text, format=True),
             "query_weather": self.query_weather,
         }
 
@@ -135,13 +135,30 @@ class IntentManager:
             "(city, country, etc), return it as a single word. If none found, "
             f"reply with “none”: MESSAGE: {text}"
         )
-        location = "".join(c for c in location_raw.lower() if c in ascii_letters)
+        location = "".join(
+            c for c in location_raw.lower().strip() if c in ascii_letters + " "
+        )
 
         if location == "none":
             return None
 
         return Weather().query_weather(location)
 
+    @staticmethod
+    def query_ah(text):
+        item_raw = Completion().request(
+            "Analyze the following message, if it contains an item name (or item link), "
+            f"return it, but only the name. If none found, reply with “none”: MESSAGE: {text}"
+        )
+        item = "".join(c for c in item_raw.lower().strip() if c in ascii_letters + " ")
+
+        if item == "none":
+            return None
+
+        try:
+            return AH.fetch_prices(item, format=True)
+        except:
+            pass
 
 # TODO: fetch/show billing/usage
 class Completion(Singleton):
