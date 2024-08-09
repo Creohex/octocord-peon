@@ -14,7 +14,7 @@ from pathlib import Path
 import nltk.chat.eliza
 import psutil
 
-from .ah import AHScraper
+from .ah import NORDNAAR_AH_SCRAPER
 from .exceptions import (
     CommandExecutionError,
     CommandMalformed,
@@ -243,13 +243,6 @@ tr_endpoints = {
 default_chance = 15
 simple_replies_collection = {"specific_name": [50, [""]]}
 ascii_ascending_luminance = ".,-~:;=!*#$@"
-
-CURR_DIR = Path(__file__).resolve(strict=True).parent
-AH_BASE_URL = yarl.URL("https://www.wowauctions.net/auctionHouse")
-NORDNAAR_AH_SCRAPER = AHScraper(
-    AH_BASE_URL / "turtle-wow/nordanaar/mergedAh/", CURR_DIR / "twow_items.json"
-)
-"""Auction house objects."""
 
 
 def de_latinize(text):
@@ -629,4 +622,4 @@ def resource_usage(text):
 def ah_query(text: str) -> str:
     """Fetch AH prices for items specified in text."""
 
-    return NORDNAAR_AH_SCRAPER.format_item_prices(NORDNAAR_AH_SCRAPER.fetch_prices(text))
+    return NORDNAAR_AH_SCRAPER.fetch_prices(text, format=True)

@@ -169,7 +169,7 @@ class AHScraper:
         item.last_updated = dt.now().timestamp()
         self.cache[item.id] = item
 
-    def fetch_prices(self, text: str) -> list:
+    def fetch_prices(self, text: str, format=False) -> list:
         """Try to differentiate specified items and query its prices."""
 
         items = set()
@@ -189,6 +189,9 @@ class AHScraper:
 
         list(map(self._query_auction, items))
 
+        if format:
+            return self.format_item_prices(items)
+
         return items
 
     @staticmethod
@@ -202,3 +205,10 @@ class AHScraper:
             return "Avg prices: " + "; ".join(
                 f"{item.name}: {item.price.as_string}" for item in items
             )
+
+
+CURR_DIR = Path(__file__).resolve(strict=True).parent
+AH_BASE_URL = URL("https://www.wowauctions.net/auctionHouse")
+NORDNAAR_AH_SCRAPER = AHScraper(
+    AH_BASE_URL / "turtle-wow/nordanaar/mergedAh/", CURR_DIR / "twow_items.json"
+)
