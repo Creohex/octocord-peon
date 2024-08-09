@@ -385,12 +385,12 @@ class Command(BaseCommand):
 
         if not (
             message.content[0] in CMD_SIGNS
-            and message.content[1:].startswith(self.prefix)
+            and message.content[1:].lower().startswith(self.prefix)
         ):
             return False
 
         prefix, text = message.content[1:].strip().split(maxsplit=1)
-        kwargs["prefix"] = prefix
+        kwargs["prefix"] = prefix.lower()
 
         try:
             print(f'DEBUG: executing "{message.content}"')
