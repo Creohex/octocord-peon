@@ -9,7 +9,8 @@ services:
         depends_on:
             - mongodb
         networks:
-            - docker_network
+            net1:
+                ipv4_address: 172.29.1.12
         env_file:
             - .env
             - .db.env
@@ -23,7 +24,8 @@ services:
         depends_on:
             - mongodb
         networks:
-            - docker_network
+            net1:
+                ipv4_address: 172.29.1.11
         env_file:
             - .env
             - .db.env
@@ -34,11 +36,16 @@ services:
         image: mongo:4.2.0
         container_name: mongodb
         networks:
-            - docker_network
+            net1:
+                ipv4_address: 172.29.1.10
         env_file:
             - .db.env
         volumes:
             - ./db/data:/data/db
 
 networks:
-  docker_network:
+  net1:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.29.1.0/24
