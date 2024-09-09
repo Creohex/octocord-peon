@@ -120,7 +120,6 @@ class AHScraper:
         "the gorilla",
         "the tiger",
         "the monkey",
-
         "stamina",
         "strength",
         "agility",
@@ -135,21 +134,21 @@ class AHScraper:
         "beast slaying",
         "blocking",
         "regeneration",
-
         "fiery wrath",
         "frozen wrath",
         "shadow wrath",
         "arcane wrath",
         "nature's wrath",
         "holy wrath",
-
         "fire resistance",
         "frost resistance",
         "shadow resistance",
         "arcane resistance",
         "nature resistance",
     ]
-    RANDOM_ENCHANT_ITEM_PATTERN = re.compile(rf".*( of (?:{'|'.join(RANDOM_ENCHANT_TYPES)}))")
+    RANDOM_ENCHANT_ITEM_PATTERN = re.compile(
+        rf".*( of (?:{'|'.join(RANDOM_ENCHANT_TYPES)}))"
+    )
 
     def __init__(self, url: URL, items_file: Path) -> Self:
         self.url = url
