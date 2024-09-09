@@ -81,6 +81,10 @@ def test_build_query_url(scraper, item, expected_url):
         ("1", "the 1 ring"),
         ("&", "red & blue mechanostrider"),
         ("n-", "ginn-su sword"),
+        ("Headstriker Sword of the Bear", "headstriker sword"),
+        ("Bloodforged Chestpiece of the Monkey", "bloodforged chestpiece"),
+        ("Coral Band of Regeneration", "coral band"),
+        ("Green Lens of Nature's Wrath", "green lens"),
     ],
 )
 def test_find_item(scraper, query, expected):
@@ -135,6 +139,7 @@ def test_query_auction_caching(scraper):
         ("", 0),
         ("gibberish", 0),
         ("dreamsha", 1),
+        ("Tellurium Band of Concentration", 1),
         ("[broom](https://database.turtle-wow.org/?item=0)", 1),
         ("[broom](https://database.turtle-wow.org/?item=0) major rejuv", 2),
         (

@@ -109,6 +109,48 @@ class AHScraper:
     INVALIDATE_AFTER = 86400
     """Amount of seconds, after which cached items will be considered invalid."""
 
+    RANDOM_ENCHANT_TYPES = [
+        "the owl",
+        "the boar",
+        "the bear",
+        "the wolf",
+        "the eagle",
+        "the falcon",
+        "the whale",
+        "the gorilla",
+        "the tiger",
+        "the monkey",
+
+        "stamina",
+        "strength",
+        "agility",
+        "intellect",
+        "spirit",
+        "healing",
+        "defense",
+        "power",
+        "marksmanship",
+        "eluding",
+        "concentration",
+        "beast slaying",
+        "blocking",
+        "regeneration",
+
+        "fiery wrath",
+        "frozen wrath",
+        "shadow wrath",
+        "arcane wrath",
+        "nature's wrath",
+        "holy wrath",
+
+        "fire resistance",
+        "frost resistance",
+        "shadow resistance",
+        "arcane resistance",
+        "nature resistance",
+    ]
+    RANDOM_ENCHANT_ITEM_PATTERN = re.compile(rf".*( of (?:{'|'.join(RANDOM_ENCHANT_TYPES)}))")
+
     def __init__(self, url: URL, items_file: Path) -> Self:
         self.url = url
         self.items_file = items_file.absolute()
@@ -131,19 +173,25 @@ class AHScraper:
             return None
 
         text = text.lower()
-        closest_item = None
-        min_distance = float("inf")
-        partial = [name for name in self.items if text in name]
 
-        for item in partial:
-            distance = Levenshtein.distance(text, item.lower())
+        def _find(search_text):
+            closest_item = None
+            min_distance = float("inf")
+            partial = [name for name in self.items if search_text in name]
 
-            if distance < min_distance:
-                min_distance = distance
-                closest_item = item
+            for item in partial:
+                distance = Levenshtein.distance(search_text, item.lower())
 
-        if not closest_item:
-            return None
+                if distance < min_distance:
+                    min_distance = distance
+                    closest_item = item
+            return closest_item
+
+        if not (closest_item := _find(text)):
+            if not (found := self.RANDOM_ENCHANT_ITEM_PATTERN.match(text)):
+                return None
+            if not (closest_item := _find(text.replace(found.groups()[0], ""))):
+                return None
 
         return Item(self.items[closest_item], closest_item)
 
