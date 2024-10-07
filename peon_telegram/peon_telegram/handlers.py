@@ -211,12 +211,14 @@ def direct_message_handler(
                         f"({update.effective_user.name}) handling direct message: '{text}'"
                     )
 
-                    await context.bot.send_message(
-                        chat_id=update.effective_chat.id,
-                        text=sanitize_markdown(callable(text, **gather_context(update))),
-                        reply_to_message_id=update.message.id if reply else None,
-                        parse_mode=MARKDOWN_PARSE_MODE,
-                    )
+                    res = sanitize_markdown(callable(text, **gather_context(update)))
+                    for chunk in [res[i : i + 4000] for i in range(len(res))[::4000]]:
+                        await context.bot.send_message(
+                            chat_id=update.effective_chat.id,
+                            text=chunk,
+                            reply_to_message_id=update.message.id if reply else None,
+                            parse_mode=MARKDOWN_PARSE_MODE,
+                        )
             except Exception as e:
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id,
