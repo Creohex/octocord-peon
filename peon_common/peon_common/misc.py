@@ -31,9 +31,14 @@ class Weather(Singleton):
         if not location:
             raise LogicalError()
 
-        response = requests.get(
-            self.URL_WEATHER.with_query({"q": location.strip(), "appid": self.api_key})
-        )
+        try:
+            response = requests.get(
+                self.URL_WEATHER.with_query(
+                    {"q": location.strip(), "appid": self.api_key}
+                )
+            )
+        except requests.ConnectionError:
+            return "service is not currently available"
         data = response.json()
 
         if not response.ok:
