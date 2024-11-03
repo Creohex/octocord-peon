@@ -1,6 +1,7 @@
 """Discord client."""
 
 import discord
+import re
 from datetime import datetime
 
 from . import commands, CommandSet, Command, MentionHandler
@@ -42,6 +43,7 @@ class Peon():
             Command("help", commands.cmd_help),
             Command("tr", commands.cmd_tr,
                     description="translate text (langs - en, et, ru, be, ...)",
+                    validator=lambda pref: re.match(r"^tr([a-z]{0}|[a-z]{2}|[a-z]{4})$", pref),
                     examples=["{0} bla", "{0}<to_lang> bla",
                               "{0}<from_lang><to_lang> bla"]),
             Command("mangle", commands.cmd_mangle,

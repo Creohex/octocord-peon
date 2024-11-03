@@ -86,10 +86,10 @@ async def cmd_help(message, content, **kwargs):
         if command.description:
             info = f"- {info} - {command.description}"
         if command.examples:
-            examples = "\n * ".join(
+            examples = "\n  * ".join(
                 [example.format(full_prefix) for example in command.examples]
             )
-            info = f"{info}\n * {examples}"
+            info = f"{info}\n  * {examples}"
 
         descriptions.append(info)
 
@@ -361,13 +361,8 @@ class BaseCommand:
 class Command(BaseCommand):
     """Peon command object."""
 
-    def __init__(self, prefix, func, **kwargs):
-        """Initialize `Command` object.
-
-        Function must have `message` object as first positional argument
-        and `content` string (containing function-related data) as
-        second positional argument.
-        """
+    def __init__(self, prefix: str, func: callable, validator: callable = None, **kwargs):
+        """Initialize `Command` object."""
 
         super().__init__(**kwargs)
 
@@ -380,6 +375,10 @@ class Command(BaseCommand):
 
         self.prefix = prefix
         self.func = func
+        self.validator = validator or self.default_validator
+
+    def default_validator(self, prefix):
+        return prefix == self.prefix
 
     async def execute(self, message, **kwargs):
         """Execute function."""
@@ -390,12 +389,17 @@ class Command(BaseCommand):
         ):
             return False
 
-        prefix, text = message.content[1:].strip().split(maxsplit=1)
-        kwargs["prefix"] = prefix.lower()
+        prefix, *text = message.content[1:].strip().split(maxsplit=1)
+        prefix = prefix.lower()
+        kwargs["prefix"] = prefix
+
+        if not self.validator(prefix):
+            print("DEBUG: ", prefix, self.prefix, text)
+            return False
 
         try:
             print(f'DEBUG: executing "{message.content}"')
-            await self.func(message, text, **kwargs)
+            await self.func(message, text[0] if text else None, **kwargs)
             return True
         except Exception as e:
             await message.add_reaction(emoji="😫")
