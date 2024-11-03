@@ -5,11 +5,12 @@ from dataclasses import dataclass, field
 from datetime import datetime as dt
 from pathlib import Path
 from string import ascii_lowercase
-from typing import Self
+from typing import Self, Optional
 from yarl import URL
 
-import Levenshtein
+# import Levenshtein
 from bs4 import BeautifulSoup as bs
+from thefuzz import process
 
 from .exceptions import CommandExecutionError
 
@@ -77,7 +78,7 @@ class Price:
 
 @dataclass
 class Item:
-    id: int
+    id: str
     name: str
     price: Price = field(default_factory=lambda: Price(0))
     last_updated: float = 0.0
@@ -109,90 +110,32 @@ class AHScraper:
     INVALIDATE_AFTER = 86400
     """Amount of seconds, after which cached items will be considered invalid."""
 
-    RANDOM_ENCHANT_TYPES = [
-        "the owl",
-        "the boar",
-        "the bear",
-        "the wolf",
-        "the eagle",
-        "the falcon",
-        "the whale",
-        "the gorilla",
-        "the tiger",
-        "the monkey",
-        "stamina",
-        "strength",
-        "agility",
-        "intellect",
-        "spirit",
-        "healing",
-        "defense",
-        "power",
-        "marksmanship",
-        "eluding",
-        "concentration",
-        "beast slaying",
-        "blocking",
-        "regeneration",
-        "fiery wrath",
-        "frozen wrath",
-        "shadow wrath",
-        "arcane wrath",
-        "nature's wrath",
-        "holy wrath",
-        "fire resistance",
-        "frost resistance",
-        "shadow resistance",
-        "arcane resistance",
-        "nature resistance",
-    ]
-    RANDOM_ENCHANT_ITEM_PATTERN = re.compile(
-        rf".*( of (?:{'|'.join(RANDOM_ENCHANT_TYPES)}))"
-    )
-
     def __init__(self, url: URL, items_file: Path) -> Self:
         self.url = url
+        self.items: dict[str, str] = {}
+        self.cache: dict[str, str] = {}
         self.items_file = items_file.absolute()
+
         if not self.items_file.is_file():
             raise Exception(f"No file found! ({self.items_file})")
 
-        self.items = {}
-        self.cache = {}  # id: obj
+        with open(self.items_file, "r") as f:
+            self.items = json.load(f)
 
-        if items_file:
-            with open(self.items_file, "r") as f:
-                self.items = json.load(f)
+    # def _update_items_file(self):
+    #     with open(self.items_file, "w") as f:
+    #         json.dump(self.items, f, indent=2)
 
     def build_query_url(self, item: Item) -> URL:
         words = "".join(c for c in item.name.lower() if c in self.LINK_ALPHABET).split()
         return self.url / f"{'-'.join(words)}-{str(item.id)}"
 
-    def find_item(self, text: str) -> Item:
+    def find_item(self, text: str) -> Optional[Item]:
         if not text:
             return None
 
-        text = text.lower()
-
-        def _find(search_text):
-            closest_item = None
-            min_distance = float("inf")
-            partial = [name for name in self.items if search_text in name]
-
-            for item in partial:
-                distance = Levenshtein.distance(search_text, item.lower())
-
-                if distance < min_distance:
-                    min_distance = distance
-                    closest_item = item
-            return closest_item
-
-        if not (closest_item := _find(text)):
-            if not (found := self.RANDOM_ENCHANT_ITEM_PATTERN.match(text)):
-                return None
-            if not (closest_item := _find(text.replace(found.groups()[0], ""))):
-                return None
-
-        return Item(self.items[closest_item], closest_item)
+        if found := process.extractOne(text.lower(), self.items, score_cutoff=60):
+            return Item(found[2], found[0])
 
     def _query_auction(self, item: Item) -> None:
         cached = self.cache.get(item.id)
@@ -221,17 +164,24 @@ class AHScraper:
 
         items = set()
         t = text
+        items_extended = False
 
         for m in re.finditer(self.LINK_PATTERN, text):
-            found = self.find_item(m.group("name"))
-            if found:
-                items.add(found)
-            t = t.replace(m.group(), "")
+            item_name = m.group("name")
+            item_id = m.group("id")
+            if item_name and item_id:
+                items.add(Item(item_id, item_name))
+                if item_id not in self.items:
+                    self.items[item_id] = item_name
+                    items_extended = True
+            t = t.replace(m.group(), "").strip()
+
+        # if items_extended:
+        #     self._update_items_file()
 
         if t:
             for name in t.split(","):
-                found = self.find_item(name)
-                if found:
+                if found := self.find_item(name):
                     items.add(found)
 
         list(map(self._query_auction, items))
