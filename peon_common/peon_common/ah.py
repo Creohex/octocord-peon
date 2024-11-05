@@ -156,7 +156,9 @@ class AHScraper:
 
         response = requests.get(self.build_query_url(item))
         if not response.ok:
-            raise CommandExecutionError(f"Unable to fetch AH data for {item.db_link}")
+            raise CommandExecutionError(
+                f"Unable to fetch AH data for '{item.name_capitalized}'"
+            )
 
         soup = bs(response.text, "html.parser")
         blocks = soup.find_all(
