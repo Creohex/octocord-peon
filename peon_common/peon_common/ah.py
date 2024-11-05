@@ -209,7 +209,7 @@ class AHScraper:
             return "nothing found"
         elif len(items) == 1:
             item = items.pop()
-            return f"Average price for '{item.name}': {item.price.as_string}"
+            return f"Average price for '{item.name_capitalized}': {item.price.as_string}"
         else:
             return "Avg prices: " + "; ".join(
                 f"{item.name}: {item.price.as_string}" for item in items
