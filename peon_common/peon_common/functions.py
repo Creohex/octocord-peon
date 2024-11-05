@@ -8,8 +8,6 @@ import requests
 import socket
 import time
 import urllib.parse
-import yarl
-from pathlib import Path
 
 import nltk.chat.eliza
 import psutil
@@ -622,4 +620,7 @@ def resource_usage(text):
 def ah_query(text: str) -> str:
     """Fetch AH prices for items specified in text."""
 
-    return NORDNAAR_AH_SCRAPER.fetch_prices(text, format=True)
+    try:
+        return NORDNAAR_AH_SCRAPER.fetch_prices(text, format=True)
+    except CommandExecutionError as e:
+        return str(e)

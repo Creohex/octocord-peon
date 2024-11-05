@@ -87,6 +87,16 @@ class Item:
     def price_readable(self):
         return self.price.as_string if self.price.value else "?"
 
+    @property
+    def name_capitalized(self):
+        return " ".join(map(str.capitalize, self.name.split()))
+
+    @property
+    def db_link(self):
+        return (
+            f"[{self.name_capitalized}](http://database.turtle-wow.org/?item={self.id})"
+        )
+
     def __eq__(self, other):
         if not isinstance(other, type(self)):
             return False
@@ -146,7 +156,7 @@ class AHScraper:
 
         response = requests.get(self.build_query_url(item))
         if not response.ok:
-            raise CommandExecutionError("Unable to fetch AH data from url")
+            raise CommandExecutionError(f"Unable to fetch AH data for {item.db_link}")
 
         soup = bs(response.text, "html.parser")
         blocks = soup.find_all(
