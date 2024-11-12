@@ -35,7 +35,8 @@ class Weather(Singleton):
             response = requests.get(
                 self.URL_WEATHER.with_query(
                     {"q": location.strip(), "appid": self.api_key}
-                )
+                ),
+                timeout=5,
             )
         except requests.ConnectionError:
             return "service is not currently available"
