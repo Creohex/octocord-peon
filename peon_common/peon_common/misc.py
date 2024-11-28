@@ -4,9 +4,11 @@ import os
 import requests
 from yarl import URL
 
+from peon_common.utils import logger
 from peon_common.exceptions import LogicalError
 
 
+LOG = logger()
 OPENWEATHER_TOKEN = "openweather_token"
 
 
@@ -38,7 +40,8 @@ class Weather(Singleton):
                 ),
                 timeout=5,
             )
-        except requests.ConnectionError:
+        except Exception as e:
+            LOG.error(f"Error during weather query:\n {str(e)}")
             return "service is not currently available"
         data = response.json()
 
