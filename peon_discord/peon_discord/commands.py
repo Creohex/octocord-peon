@@ -23,7 +23,7 @@ ALTERNATIVE_CMD_SIGNS = ["%"]
 """Command signs that can alternative be used."""
 CMD_SIGNS = [CMD_SIGN] + ALTERNATIVE_CMD_SIGNS
 
-SENDER_PATTERN = r"^\[\[\w+\]\([\w:\/\-\.\#\!]+\)\]:\s"
+SENDER_PATTERN = r"^\[\[\w+\]\(<?[\w:\/\-\.\#\!]+>?\)\]:\s"
 """A regexp pattern for messages that contain sender hyperlink."""
 
 GENERIC_GRATS = [
