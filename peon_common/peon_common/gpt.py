@@ -27,7 +27,8 @@ MAX_TOKENS = 1000
 MODEL_3_5_TURBO = "gpt-3.5-turbo"
 MODEL_4_O = "gpt-4o"
 MODEL_4_O_MINI = "gpt-4o-mini"
-MODEL_DEFAULT = MODEL_4_O_MINI
+MODEL_5_MINI = "gpt-5-mini"
+MODEL_DEFAULT = MODEL_5_MINI
 """Default model used for completions."""
 
 TEMPERATURE_DEFAULT = 0.3
